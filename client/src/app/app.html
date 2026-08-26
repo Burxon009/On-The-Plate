@@ -1,0 +1,46 @@
+@if (!isLoggedIn()) {
+<div class="page">
+  <main class="card">
+
+    <div class="logo">U</div>
+
+    <h1>Loyalty</h1>
+    <p class="subtitle">Loyalty</p>
+
+    <section class="login">
+      <h2>Добро пожаловать 👋</h2>
+
+      <p class="description">
+        Введите номер телефона, чтобы войти в программу лояльности.
+      </p>
+
+      <form (ngSubmit)="login()">
+
+        <input
+          type="tel"
+          name="phone"
+          [(ngModel)]="phone"
+          placeholder="+998 90 123 45 67"
+          required
+        />
+
+        <button
+          type="submit"
+          [disabled]="loading"
+        >
+          {{ loading ? 'Вход...' : 'Продолжить' }}
+        </button>
+
+      </form>
+
+      @if (error) {
+        <p class="error">{{ error }}</p>
+      }
+
+    </section>
+
+  </main>
+</div>
+} @else {
+  <router-outlet></router-outlet>
+}

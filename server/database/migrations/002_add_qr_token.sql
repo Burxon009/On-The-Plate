@@ -1,0 +1,2 @@
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS qr_token UUID UNIQUE NOT NULL DEFAULT gen_random_uuid();

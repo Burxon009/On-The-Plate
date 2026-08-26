@@ -1,0 +1,157 @@
+<div class="loyalty-app">
+  <header class="topbar">
+    <div>
+      <div class="store-label">ПРОГРАММА ЛОЯЛЬНОСТИ</div>
+      <h1>{{ userLabel() }}</h1>
+    </div>
+    <button class="icon-button" type="button" (click)="logout()" title="Выйти">
+      Выйти
+    </button>
+  </header>
+
+  <section class="section store-controls">
+    <div class="section-title">
+      <h2>Магазины</h2>
+    </div>
+
+    @if (loadingStores) {
+      <p>Загрузка магазинов...</p>
+    } @else if (stores.length === 0) {
+      <p>Подключённых магазинов пока нет.</p>
+    } @else {
+      <label>
+        Выбранный магазин
+        <select [ngModel]="selectedStore?.id" (ngModelChange)="selectStoreById($event)">
+          @for (store of stores; track store.id) {
+            <option [ngValue]="store.id">{{ store.name }}</option>
+          }
+        </select>
+      </label>
+    }
+
+    <form (ngSubmit)="joinStore()">
+      <label>
+        ID магазина
+        <input type="number" name="storeId" [(ngModel)]="storeIdInput" min="1" required />
+      </label>
+      <button type="submit" [disabled]="joiningStore">
+        {{ joiningStore ? 'Добавление...' : 'Добавить магазин' }}
+      </button>
+    </form>
+
+    @if (storeError) {
+      <p class="error">{{ storeError }}</p>
+    }
+  </section>
+
+  @if (selectedStore) {
+    <section class="wallet-card">
+      <div class="wallet-top">
+        <span>Мой кошелёк</span>
+        <span class="wallet-store">{{ selectedStore.name }}</span>
+      </div>
+
+      @if (loadingStoreData) {
+        <div class="balance">Загрузка...</div>
+      } @else if (wallet) {
+        <div class="balance">{{ wallet.balance | number }} <small>бонусов</small></div>
+      } @else {
+        <div class="balance">Баланс недоступен</div>
+      }
+
+      <div class="wallet-info">
+        <div>
+          <span>Cashback</span>
+          <strong>Данные пока недоступны</strong>
+        </div>
+        <div>
+          <span>Покупки</span>
+          <strong>См. историю операций</strong>
+        </div>
+      </div>
+    </section>
+
+    @if (error) {
+      <p class="error">{{ error }}</p>
+    }
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Акции</h2></div>
+      <p>Активных акций пока нет.</p>
+    </section>
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Прогресс акции</h2></div>
+      <p>Данные прогресса пока недоступны.</p>
+    </section>
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Rewards</h2></div>
+      <p>Доступных наград пока нет.</p>
+    </section>
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Меню</h2></div>
+      <p>Меню магазина пока недоступно.</p>
+    </section>
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Новинки</h2></div>
+      <p>Новинок пока нет.</p>
+    </section>
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Отзывы</h2></div>
+      <p>Отзывы пока недоступны.</p>
+    </section>
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Сообщения</h2></div>
+      <p>Сообщений от магазина пока нет.</p>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><h2>История операций</h2></div>
+      @if (loadingStoreData) {
+        <p>Загрузка истории...</p>
+      } @else if (transactions.length === 0) {
+        <p>Операций пока нет.</p>
+      } @else {
+        <div class="history">
+          @for (transaction of transactions; track transaction.id) {
+            <div class="history-item">
+              <div class="history-main">
+                <strong>{{ transaction.description || transaction.type }}</strong>
+                <span>{{ transaction.created_at | date:'dd.MM.yyyy HH:mm' }}</span>
+              </div>
+              <div class="history-value">
+                <strong>{{ transactionSign(transaction) }}{{ transaction.amount | number }}</strong>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <button class="qr-button" type="button" (click)="openQr()">
+    <span>▣</span>
+    <strong>Мой QR</strong>
+  </button>
+</div>
+
+@if (showQr) {
+  <div class="qr-backdrop" role="presentation" (click)="closeQr()">
+    <section class="qr-dialog" role="dialog" aria-modal="true" aria-labelledby="qr-title" (click)="$event.stopPropagation()">
+      <button class="close-button" type="button" aria-label="Закрыть" (click)="closeQr()">×</button>
+      <h2 id="qr-title">Мой QR</h2>
+      @if (loadingQr) {
+        <p>Загрузка QR-кода...</p>
+      } @else if (qrImageUrl) {
+        <img [src]="qrImageUrl" alt="Персональный QR-код" />
+      } @else {
+        <p class="error">{{ qrError }}</p>
+      }
+    </section>
+  </div>
+}
