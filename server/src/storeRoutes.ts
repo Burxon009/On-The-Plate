@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
+import { storeAdminMiddleware } from "./storeAdminMiddleware";
 
 const router = Router();
 
@@ -43,69 +44,89 @@ router.get("/", authMiddleware, async (_req: AuthRequest, res) => {
 
 /**
  * POST /stores
- * Создать магазин
- * Только ADMIN
+ * Создать магазин.
+ * Только ADMIN.
+ *
+ * Создатель автоматически привязывается к новому магазину
+ * через store_admins — становится его единственным admin,
+ * пока сам не добавит других (отдельным запросом в будущем).
  */
 router.post(
   "/",
   authMiddleware,
   adminMiddleware,
   async (req: AuthRequest, res) => {
-  try {
-   
+    const client = await pool.connect();
 
-    const {
-      name,
-      description,
-      logoUrl,
-      primaryColor,
-    } = req.body;
+    try {
+      const { name, description, logoUrl, primaryColor } = req.body;
 
-    if (!name || typeof name !== "string") {
-      return res.status(400).json({
-        message: "Название магазина обязательно",
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({
+          message: "Название магазина обязательно",
+        });
+      }
+
+      await client.query("BEGIN");
+
+      const storeResult = await client.query(
+        `
+        INSERT INTO stores (
+          name,
+          description,
+          logo_url,
+          primary_color
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING
+          id,
+          name,
+          description,
+          logo_url,
+          primary_color,
+          is_active,
+          created_at,
+          updated_at
+        `,
+        [
+          name.trim(),
+          description || null,
+          logoUrl || null,
+          primaryColor || null,
+        ]
+      );
+
+      const store = storeResult.rows[0];
+
+      // Привязываем создателя как admin этого магазина.
+      await client.query(
+        `
+        INSERT INTO store_admins (user_id, store_id)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id, store_id) DO NOTHING
+        `,
+        [req.user!.userId, store.id]
+      );
+
+      await client.query("COMMIT");
+
+      res.status(201).json({
+        message: "Магазин создан ✅",
+        store,
       });
+    } catch (error) {
+      await client.query("ROLLBACK");
+
+      console.error("Ошибка создания магазина:", error);
+
+      res.status(500).json({
+        message: "Ошибка создания магазина ❌",
+      });
+    } finally {
+      client.release();
     }
-
-    const result = await pool.query(
-      `
-      INSERT INTO stores (
-        name,
-        description,
-        logo_url,
-        primary_color
-      )
-      VALUES ($1, $2, $3, $4)
-      RETURNING
-        id,
-        name,
-        description,
-        logo_url,
-        primary_color,
-        is_active,
-        created_at,
-        updated_at
-      `,
-      [
-        name.trim(),
-        description || null,
-        logoUrl || null,
-        primaryColor || null,
-      ]
-    );
-
-    res.status(201).json({
-      message: "Магазин создан ✅",
-      store: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Ошибка создания магазина:", error);
-
-    res.status(500).json({
-      message: "Ошибка создания магазина ❌",
-    });
   }
-});
+);
 
 /**
  * POST /stores/:storeId/join
@@ -116,7 +137,7 @@ router.post(
   authMiddleware,
   async (req: AuthRequest, res) => {
     try {
-const userId = req.user!.userId;
+      const userId = req.user!.userId;
       const storeId = Number(req.params.storeId);
 
       if (!Number.isInteger(storeId)) {
@@ -214,6 +235,49 @@ router.get(
       });
     } catch (error) {
       console.error("Ошибка получения магазинов клиента:", error);
+
+      res.status(500).json({
+        message: "Ошибка получения магазинов ❌",
+      });
+    }
+  }
+);
+
+/**
+ * GET /stores/managed
+ * Получить список магазинов, которыми управляет текущий admin.
+ * Нужно для админ-панели — чтобы admin видел только свои магазины,
+ * а не все существующие.
+ */
+router.get(
+  "/managed",
+  authMiddleware,
+  adminMiddleware,
+  async (req: AuthRequest, res) => {
+    try {
+      const result = await pool.query(
+        `
+        SELECT
+          s.id,
+          s.name,
+          s.description,
+          s.logo_url,
+          s.primary_color,
+          s.is_active,
+          sa.created_at AS linked_at
+        FROM store_admins sa
+        INNER JOIN stores s ON s.id = sa.store_id
+        WHERE sa.user_id = $1
+        ORDER BY sa.created_at DESC
+        `,
+        [req.user!.userId]
+      );
+
+      res.json({
+        stores: result.rows,
+      });
+    } catch (error) {
+      console.error("Ошибка получения магазинов admin:", error);
 
       res.status(500).json({
         message: "Ошибка получения магазинов ❌",

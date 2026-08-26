@@ -3,83 +3,100 @@ import QRCode from "qrcode";
 import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
+import { storeAdminMiddleware } from "./storeAdminMiddleware";
 
 const router = Router();
 
 /**
- * GET /users
- * Получить список всех пользователей
+ * GET /users?storeId=123
+ * Получить список клиентов КОНКРЕТНОГО магазина.
+ *
+ * storeId обязателен и проверяется через storeAdminMiddleware —
+ * admin видит только клиентов своих магазинов, а не всех клиентов
+ * платформы целиком.
  */
 router.get(
   "/",
   authMiddleware,
   adminMiddleware,
-  async (_req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT
-        id,
-        phone,
-        name,
-        role,
-        qr_token,
-        created_at,
-        updated_at
-       FROM users
-       ORDER BY id DESC`
-    );
+  storeAdminMiddleware,
+  async (req: AuthRequest, res) => {
+    try {
+      const storeId = Number(req.query.storeId);
 
-    res.json(result.rows);
-  } catch (error) {
-    console.error("Ошибка получения пользователей:", error);
+      const result = await pool.query(
+        `
+        SELECT
+          u.id,
+          u.phone,
+          u.name,
+          u.role,
+          u.qr_token,
+          u.created_at,
+          u.updated_at
+        FROM users u
+        INNER JOIN user_stores us ON us.user_id = u.id
+        WHERE us.store_id = $1
+        ORDER BY u.id DESC
+        `,
+        [storeId]
+      );
 
-    res.status(500).json({
-      message: "Ошибка получения пользователей ❌",
-    });
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Ошибка получения пользователей:", error);
+
+      res.status(500).json({
+        message: "Ошибка получения пользователей ❌",
+      });
+    }
   }
-});
+);
 
 /**
  * POST /users
- * Создать пользователя
+ * Создать пользователя вручную (например, для теста).
+ * Не привязано к конкретному магазину — пользователь всё равно
+ * должен отдельно подключиться к магазину через /stores/:id/join.
  */
 router.post(
   "/",
   authMiddleware,
   adminMiddleware,
   async (req, res) => {
-  try {
-    const { phone, name } = req.body;
+    try {
+      const { phone, name } = req.body;
 
-    if (!phone) {
-      return res.status(400).json({
-        message: "Телефон обязателен",
+      if (!phone) {
+        return res.status(400).json({
+          message: "Телефон обязателен",
+        });
+      }
+
+      const result = await pool.query(
+        `INSERT INTO users (phone, name)
+         VALUES ($1, $2)
+         RETURNING
+          id,
+          phone,
+          name,
+          role,
+          qr_token,
+          created_at,
+          updated_at`,
+        [phone, name || null]
+      );
+
+      res.status(201).json(result.rows[0]);
+    } catch (error) {
+      console.error("Ошибка создания пользователя:", error);
+
+      res.status(500).json({
+        message: "Ошибка создания пользователя ",
       });
     }
-
-    const result = await pool.query(
-      `INSERT INTO users (phone, name)
-       VALUES ($1, $2)
-       RETURNING
-        id,
-        phone,
-        name,
-        role,
-        qr_token,
-        created_at,
-        updated_at`,
-      [phone, name || null]
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error("Ошибка создания пользователя:", error);
-
-    res.status(500).json({
-      message: "Ошибка создания пользователя ",
-    });
   }
-});
+);
 
 /**
  * GET /users/me
@@ -198,54 +215,66 @@ router.get(
     }
   }
 );
+
 /**
  * POST /users/qr/resolve
- * Найти клиента по QR-токену
+ * Найти клиента по QR-токену — но только если он подключён
+ * именно к тому storeId, который передал admin.
+ *
+ * Это не даёт admin'у одного магазина "пробивать" по QR клиентов,
+ * которые к его магазину вообще не подключены.
  */
 router.post(
   "/qr/resolve",
   authMiddleware,
   adminMiddleware,
+  storeAdminMiddleware,
   async (req, res) => {
-  try {
-    const { qrToken } = req.body;
+    try {
+      const { qrToken, storeId } = req.body;
 
-    if (!qrToken) {
-      return res.status(400).json({
-        message: "QR-токен обязателен",
+      if (!qrToken) {
+        return res.status(400).json({
+          message: "QR-токен обязателен",
+        });
+      }
+
+      const result = await pool.query(
+        `
+        SELECT
+          u.id,
+          u.phone,
+          u.name,
+          u.role,
+          u.created_at,
+          u.updated_at
+        FROM users u
+        INNER JOIN user_stores us
+          ON us.user_id = u.id AND us.store_id = $2
+        WHERE u.qr_token = $1
+        `,
+        [qrToken, storeId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          message:
+            "Клиент не найден или не подключён к этому магазину",
+        });
+      }
+
+      res.json({
+        message: "Клиент найден ✅",
+        user: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Ошибка поиска клиента по QR:", error);
+
+      res.status(500).json({
+        message: "Ошибка поиска клиента по QR ❌",
       });
     }
-
-    const result = await pool.query(
-      `SELECT
-        id,
-        phone,
-        name,
-        role,
-        created_at,
-        updated_at
-       FROM users
-       WHERE qr_token = $1`,
-      [qrToken]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        message: "Клиент по QR не найден",
-      });
-    }
-
-    res.json({
-      message: "Клиент найден ✅",
-      user: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Ошибка поиска клиента по QR:", error);
-
-    res.status(500).json({
-      message: "Ошибка поиска клиента по QR ❌",
-    });
   }
-});
+);
 
 export default router;

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
+import { storeAdminMiddleware } from "./storeAdminMiddleware";
 import { createPurchase } from "./purchaseService";
 
 const router = Router();
@@ -10,12 +11,14 @@ const router = Router();
  * POST /purchases
  * Создать покупку по QR клиента.
  *
- * Доступ только для ADMIN.
+ * Доступ только для ADMIN, привязанного именно к этому storeId
+ * (проверяется через storeAdminMiddleware) — не к любому магазину.
  */
 router.post(
   "/",
   authMiddleware,
   adminMiddleware,
+  storeAdminMiddleware,
   async (req: AuthRequest, res) => {
     try {
       const { qrToken, storeId, amount } = req.body;
