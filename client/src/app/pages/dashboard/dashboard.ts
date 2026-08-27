@@ -10,6 +10,7 @@ interface Store {
   description: string | null;
   logo_url: string | null;
   primary_color: string | null;
+  cashback_percent: string | number;
 }
 
 interface Wallet {

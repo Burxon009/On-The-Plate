@@ -52,9 +52,17 @@
   </section>
 
   @if (selectedStore(); as store) {
-    <section class="wallet-card">
+    <section
+      class="wallet-card"
+      [style.--brand-color]="store.primary_color || '#171717'"
+    >
       <div class="wallet-top">
-        <span>Мой кошелёк</span>
+        <span class="wallet-brand">
+          @if (store.logo_url) {
+            <img class="store-logo" [src]="store.logo_url" [alt]="store.name" />
+          }
+          <span>Мой кошелёк</span>
+        </span>
         <span class="wallet-store">{{ store.name }}</span>
       </div>
 
@@ -69,7 +77,7 @@
       <div class="wallet-info">
         <div>
           <span>Cashback</span>
-          <strong>Данные пока недоступны</strong>
+          <strong>{{ store.cashback_percent }}%</strong>
         </div>
         <div>
           <span>Покупки</span>
