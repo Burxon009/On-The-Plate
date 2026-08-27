@@ -4,6 +4,9 @@ import authRoutes from "./authRoutes";
 import walletRoutes from "./walletRoutes";
 import storeRoutes from "./storeRoutes";
 import purchaseRoutes from "./purchaseRoutes";
+import promotionRoutes from "./promotionRoutes";
+import rewardRoutes from "./rewardRoutes";
+import reviewRoutes from "./reviewRoutes";
 import { pool } from "./db";
 
 const app = express();
@@ -24,6 +27,9 @@ app.use("/auth", authRoutes);
 app.use("/wallet", walletRoutes);
 app.use("/stores", storeRoutes);
 app.use("/purchases", purchaseRoutes);
+app.use("/promotions", promotionRoutes);
+app.use("/rewards", rewardRoutes);
+app.use("/reviews", reviewRoutes);
 
 const PORT = 3000;
 
