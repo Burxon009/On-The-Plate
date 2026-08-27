@@ -25,6 +25,24 @@ interface Transaction {
   created_at: string;
 }
 
+interface Promotion {
+  id: number;
+  title: string;
+  description: string | null;
+  target_count: number;
+  reward_title: string;
+  current_count: number;
+  cycle: number;
+}
+
+interface Review {
+  id: number;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  author_name: string | null;
+}
+
 @Component({
   selector: 'app-dashboard',
   imports: [DecimalPipe, DatePipe, FormsModule],
@@ -46,6 +64,21 @@ export class Dashboard implements OnInit, OnDestroy {
   error = '';
   storeError = '';
   qrError = '';
+
+  // Акции
+  promotions: Promotion[] = [];
+  loadingPromotions = false;
+  promotionsError = '';
+
+  // Отзывы — показываются вместо акций, если у магазина нет активной акции
+  reviews: Review[] = [];
+  loadingReviews = false;
+  reviewsError = '';
+  reviewRatingInput = 5;
+  reviewCommentInput = '';
+  submittingReview = false;
+  reviewSubmitError = '';
+  reviewSubmitSuccess = false;
 
   private readonly apiUrl = 'http://localhost:3000';
 
@@ -88,9 +121,13 @@ export class Dashboard implements OnInit, OnDestroy {
     this.selectedStore = store;
     this.wallet = null;
     this.transactions = [];
+    this.promotions = [];
+    this.reviews = [];
     this.error = '';
+    this.resetReviewForm();
     if (store) {
       this.loadStoreData(store.id);
+      this.loadPromotions(store.id);
     }
   }
 
@@ -157,6 +194,58 @@ export class Dashboard implements OnInit, OnDestroy {
     return transaction.type === 'spend' ? '-' : '+';
   }
 
+  promotionProgressPercent(promotion: Promotion): number {
+    if (promotion.target_count <= 0) {
+      return 0;
+    }
+    return Math.min(100, Math.round((promotion.current_count / promotion.target_count) * 100));
+  }
+
+  submitReview(): void {
+    if (this.submittingReview || !this.selectedStore) {
+      return;
+    }
+
+    if (!Number.isInteger(this.reviewRatingInput) || this.reviewRatingInput < 1 || this.reviewRatingInput > 5) {
+      this.reviewSubmitError = 'Выберите оценку от 1 до 5';
+      return;
+    }
+
+    this.submittingReview = true;
+    this.reviewSubmitError = '';
+    this.reviewSubmitSuccess = false;
+
+    const storeId = this.selectedStore.id;
+
+    this.http
+      .post(`${this.apiUrl}/reviews`, {
+        storeId,
+        rating: this.reviewRatingInput,
+        comment: this.reviewCommentInput.trim() || null,
+      })
+      .subscribe({
+        next: () => {
+          this.submittingReview = false;
+          this.reviewSubmitSuccess = true;
+          this.resetReviewForm(true);
+          this.loadReviews(storeId);
+        },
+        error: (error) => {
+          this.submittingReview = false;
+          this.reviewSubmitError = error.error?.message || 'Не удалось отправить отзыв';
+        },
+      });
+  }
+
+  private resetReviewForm(keepSuccessFlag = false): void {
+    this.reviewRatingInput = 5;
+    this.reviewCommentInput = '';
+    this.reviewSubmitError = '';
+    if (!keepSuccessFlag) {
+      this.reviewSubmitSuccess = false;
+    }
+  }
+
   private loadStoreData(storeId: number): void {
     this.loadingStoreData = true;
     this.http.get<{ wallet: Wallet }>(`${this.apiUrl}/wallet/${storeId}`).subscribe({
@@ -187,6 +276,55 @@ export class Dashboard implements OnInit, OnDestroy {
         error: (error) => {
           this.error = error.error?.message || 'Не удалось загрузить историю операций';
           this.loadingStoreData = false;
+        },
+      });
+  }
+
+  private loadPromotions(storeId: number): void {
+    this.loadingPromotions = true;
+    this.promotionsError = '';
+
+    this.http
+      .get<{ promotions: Promotion[] }>(`${this.apiUrl}/promotions`, {
+        params: { storeId },
+      })
+      .subscribe({
+        next: ({ promotions }) => {
+          this.promotions = promotions;
+          this.loadingPromotions = false;
+
+          // Отзывы нужны только как fallback, когда акций нет —
+          // не грузим их заранее, если в них нет необходимости.
+          if (promotions.length === 0) {
+            this.loadReviews(storeId);
+          }
+        },
+        error: (error) => {
+          this.promotionsError = error.error?.message || 'Не удалось загрузить акции';
+          this.loadingPromotions = false;
+          // Если акции не загрузились — всё равно показываем отзывы,
+          // чтобы блок не был пустым.
+          this.loadReviews(storeId);
+        },
+      });
+  }
+
+  private loadReviews(storeId: number): void {
+    this.loadingReviews = true;
+    this.reviewsError = '';
+
+    this.http
+      .get<{ reviews: Review[] }>(`${this.apiUrl}/reviews`, {
+        params: { storeId },
+      })
+      .subscribe({
+        next: ({ reviews }) => {
+          this.reviews = reviews;
+          this.loadingReviews = false;
+        },
+        error: (error) => {
+          this.reviewsError = error.error?.message || 'Не удалось загрузить отзывы';
+          this.loadingReviews = false;
         },
       });
   }
