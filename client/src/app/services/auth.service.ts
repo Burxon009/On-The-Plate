@@ -11,9 +11,14 @@ export interface User {
   qr_token?: string;
 }
 
-interface LoginResponse {
+interface VerifyCodeResponse {
   token: string;
   user: User;
+}
+
+interface RequestCodeResponse {
+  message: string;
+  devCode?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,9 +41,14 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
-  login(phone: string): Observable<LoginResponse> {
+  requestCode(phone: string): Observable<RequestCodeResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiUrl}/auth/login`, { phone })
+      .post<RequestCodeResponse>(`${this.apiUrl}/auth/request-code`, { phone });
+  }
+
+  verifyCode(phone: string, code: string, name: string): Observable<VerifyCodeResponse> {
+    return this.http
+      .post<VerifyCodeResponse>(`${this.apiUrl}/auth/verify-code`, { phone, code, name })
       .pipe(
         tap(({ token, user }) => {
           localStorage.setItem(this.tokenKey, token);
