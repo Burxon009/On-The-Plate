@@ -14,15 +14,15 @@
       <h2>Магазины</h2>
     </div>
 
-    @if (loadingStores) {
+    @if (loadingStores()) {
       <p>Загрузка магазинов...</p>
-    } @else if (stores.length === 0) {
+    } @else if (stores().length === 0) {
       <p>Подключённых магазинов пока нет.</p>
     } @else {
       <label>
         Выбранный магазин
-        <select [ngModel]="selectedStore?.id" (ngModelChange)="selectStoreById($event)">
-          @for (store of stores; track store.id) {
+        <select [ngModel]="selectedStore()?.id" (ngModelChange)="selectStoreById($event)">
+          @for (store of stores(); track store.id) {
             <option [ngValue]="store.id">{{ store.name }}</option>
           }
         </select>
@@ -32,28 +32,35 @@
     <form (ngSubmit)="joinStore()">
       <label>
         ID магазина
-        <input type="number" name="storeId" [(ngModel)]="storeIdInput" min="1" required />
+        <input
+          type="number"
+          name="storeId"
+          [ngModel]="storeIdInput()"
+          (ngModelChange)="storeIdInput.set($event)"
+          min="1"
+          required
+        />
       </label>
-      <button type="submit" [disabled]="joiningStore">
-        {{ joiningStore ? 'Добавление...' : 'Добавить магазин' }}
+      <button type="submit" [disabled]="joiningStore()">
+        {{ joiningStore() ? 'Добавление...' : 'Добавить магазин' }}
       </button>
     </form>
 
-    @if (storeError) {
-      <p class="error">{{ storeError }}</p>
+    @if (storeError()) {
+      <p class="error">{{ storeError() }}</p>
     }
   </section>
 
-  @if (selectedStore) {
+  @if (selectedStore(); as store) {
     <section class="wallet-card">
       <div class="wallet-top">
         <span>Мой кошелёк</span>
-        <span class="wallet-store">{{ selectedStore.name }}</span>
+        <span class="wallet-store">{{ store.name }}</span>
       </div>
 
-      @if (loadingStoreData) {
+      @if (loadingStoreData()) {
         <div class="balance">Загрузка...</div>
-      } @else if (wallet) {
+      } @else if (wallet(); as wallet) {
         <div class="balance">{{ wallet.balance | number }} <small>бонусов</small></div>
       } @else {
         <div class="balance">Баланс недоступен</div>
@@ -71,21 +78,21 @@
       </div>
     </section>
 
-    @if (error) {
-      <p class="error">{{ error }}</p>
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
     }
 
     <section class="section client-block">
-      @if (loadingPromotions) {
+      @if (loadingPromotions()) {
         <div class="section-title"><h2>Акции</h2></div>
         <p>Загрузка акций...</p>
-      } @else if (promotions.length > 0) {
+      } @else if (promotions().length > 0) {
         <div class="section-title"><h2>Акции</h2></div>
-        @if (promotionsError) {
-          <p class="error">{{ promotionsError }}</p>
+        @if (promotionsError()) {
+          <p class="error">{{ promotionsError() }}</p>
         }
         <div class="promotions-list">
-          @for (promotion of promotions; track promotion.id) {
+          @for (promotion of promotions(); track promotion.id) {
             <div class="promotion-card">
               <div class="promotion-header">
                 <strong>{{ promotion.title }}</strong>
@@ -108,13 +115,17 @@
         <!-- Активных акций нет — вместо пустого блока показываем отзывы -->
         <div class="section-title"><h2>Отзывы</h2></div>
 
-        @if (loadingReviews) {
+        @if (loadingReviews()) {
           <p>Загрузка отзывов...</p>
         } @else {
           <form class="review-form" (ngSubmit)="submitReview()">
             <label>
               Ваша оценка
-              <select name="rating" [(ngModel)]="reviewRatingInput">
+              <select
+                name="rating"
+                [ngModel]="reviewRatingInput()"
+                (ngModelChange)="reviewRatingInput.set($event)"
+              >
                 <option [ngValue]="5">5 — Отлично</option>
                 <option [ngValue]="4">4 — Хорошо</option>
                 <option [ngValue]="3">3 — Нормально</option>
@@ -127,31 +138,32 @@
               Комментарий (необязательно)
               <textarea
                 name="comment"
-                [(ngModel)]="reviewCommentInput"
+                [ngModel]="reviewCommentInput()"
+                (ngModelChange)="reviewCommentInput.set($event)"
                 rows="3"
                 placeholder="Расскажите, как вам у нас..."
               ></textarea>
             </label>
 
-            <button type="submit" [disabled]="submittingReview">
-              {{ submittingReview ? 'Отправка...' : 'Оставить отзыв' }}
+            <button type="submit" [disabled]="submittingReview()">
+              {{ submittingReview() ? 'Отправка...' : 'Оставить отзыв' }}
             </button>
 
-            @if (reviewSubmitSuccess) {
+            @if (reviewSubmitSuccess()) {
               <p class="success">Спасибо за отзыв! ✅</p>
             }
-            @if (reviewSubmitError) {
-              <p class="error">{{ reviewSubmitError }}</p>
+            @if (reviewSubmitError()) {
+              <p class="error">{{ reviewSubmitError() }}</p>
             }
           </form>
 
-          @if (reviewsError) {
-            <p class="error">{{ reviewsError }}</p>
-          } @else if (reviews.length === 0) {
+          @if (reviewsError()) {
+            <p class="error">{{ reviewsError() }}</p>
+          } @else if (reviews().length === 0) {
             <p>Пока отзывов нет — станьте первым!</p>
           } @else {
             <div class="reviews-list">
-              @for (review of reviews; track review.id) {
+              @for (review of reviews(); track review.id) {
                 <div class="review-card">
                   <div class="review-header">
                     <strong>{{ review.author_name || 'Клиент' }}</strong>
@@ -191,13 +203,13 @@
 
     <section class="section">
       <div class="section-title"><h2>История операций</h2></div>
-      @if (loadingStoreData) {
+      @if (loadingStoreData()) {
         <p>Загрузка истории...</p>
-      } @else if (transactions.length === 0) {
+      } @else if (transactions().length === 0) {
         <p>Операций пока нет.</p>
       } @else {
         <div class="history">
-          @for (transaction of transactions; track transaction.id) {
+          @for (transaction of transactions(); track transaction.id) {
             <div class="history-item">
               <div class="history-main">
                 <strong>{{ transaction.description || transaction.type }}</strong>
@@ -219,17 +231,17 @@
   </button>
 </div>
 
-@if (showQr) {
+@if (showQr()) {
   <div class="qr-backdrop" role="presentation" (click)="closeQr()">
     <section class="qr-dialog" role="dialog" aria-modal="true" aria-labelledby="qr-title" (click)="$event.stopPropagation()">
       <button class="close-button" type="button" aria-label="Закрыть" (click)="closeQr()">×</button>
       <h2 id="qr-title">Мой QR</h2>
-      @if (loadingQr) {
+      @if (loadingQr()) {
         <p>Загрузка QR-кода...</p>
-      } @else if (qrImageUrl) {
+      } @else if (qrImageUrl(); as qrImageUrl) {
         <img [src]="qrImageUrl" alt="Персональный QR-код" />
       } @else {
-        <p class="error">{{ qrError }}</p>
+        <p class="error">{{ qrError() }}</p>
       }
     </section>
   </div>

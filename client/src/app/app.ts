@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterOutlet } from '@angular/router';
@@ -15,14 +15,21 @@ export class App {
   protected get isLoggedIn() {
     return this.auth.isLoggedIn;
   }
-  phone = '';
+
+  // Все поля состояния формы входа — signals.
+  // Это zoneless-приложение (без zone.js): экран перерисовывается только
+  // когда меняется signal или срабатывает DOM-событие внутри шаблона.
+  // Обычные переменные класса, изменённые внутри HTTP-callback'а,
+  // НЕ вызывают перерисовку сами по себе — именно это раньше вызывало
+  // эффект "зависшей" кнопки, пока пользователь не трогал поле ввода.
+  phone = signal('');
   private verificationPhone = '';
-  code = '';
-  name = '';
-  codeRequested = false;
-  devCode: string | null = null;
-  loading = false;
-  error = '';
+  code = signal('');
+  name = signal('');
+  codeRequested = signal(false);
+  loading = signal(false);
+  error = signal('');
+  devCode = signal<string | null>(null);
 
   constructor(
     private readonly auth: AuthService,
@@ -45,87 +52,96 @@ export class App {
   }
 
   login(): void {
-    if (this.loading) {
+    if (this.loading()) {
       return;
     }
 
-    const normalizedPhone = this.normalizePhone(this.phone);
+    const normalizedPhone = this.normalizePhone(this.phone());
 
     if (!/^\+998\d{9}$/.test(normalizedPhone)) {
-      this.error = 'Некорректный номер. Формат: +998XXXXXXXXX';
+      this.error.set('Некорректный номер. Формат: +998XXXXXXXXX (9 цифр после +998)');
       return;
     }
 
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
+    this.devCode.set(null);
 
     this.auth.requestCode(normalizedPhone).pipe(
       timeout(8000),
       finalize(() => {
-        this.loading = false;
+        this.loading.set(false);
       }),
     ).subscribe({
       next: (response) => {
         this.verificationPhone = normalizedPhone;
-        this.codeRequested = true;
-        this.devCode = response.devCode ?? null;
+        this.codeRequested.set(true);
+        // devCode приходит только в DEV-режиме — в проде его не будет.
+        this.devCode.set(response.devCode ?? null);
       },
       error: (error) => {
-        this.error = error.name === 'TimeoutError'
-          ? 'Сервер отвечает слишком долго. Попробуйте ещё раз.'
-          : error.error?.message || 'Не удалось отправить код';
+        this.error.set(
+          error.name === 'TimeoutError'
+            ? 'Сервер отвечает слишком долго. Попробуйте ещё раз.'
+            : error.error?.message || 'Не удалось отправить код',
+        );
       },
     });
   }
 
   verifyCode(): void {
-    if (this.loading) {
+    if (this.loading()) {
       return;
     }
 
     if (!this.verificationPhone) {
-      this.error = 'Сначала запросите код повторно.';
+      this.error.set('Сначала запросите код повторно.');
       return;
     }
 
-    if (!this.code.trim()) {
-      this.error = 'Введите SMS-код';
+    if (!this.code().trim()) {
+      this.error.set('Введите SMS-код');
       return;
     }
 
-    if (!this.name.trim()) {
-      this.error = 'Введите ваше имя';
+    if (!this.name().trim()) {
+      this.error.set('Введите ваше имя');
       return;
     }
 
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
 
-    this.auth.verifyCode(this.verificationPhone, this.code.trim(), this.name.trim()).pipe(
+    this.auth.verifyCode(this.verificationPhone, this.code().trim(), this.name().trim()).pipe(
       timeout(8000),
       finalize(() => {
-        this.loading = false;
+        this.loading.set(false);
       }),
     ).subscribe({
       next: () => {
         this.verificationPhone = '';
-        this.name = '';
+        this.name.set('');
         void this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        this.error = error.name === 'TimeoutError'
-          ? 'Сервер отвечает слишком долго. Попробуйте ещё раз.'
-          : error.error?.message || 'Не удалось подтвердить код';
+        this.error.set(
+          error.name === 'TimeoutError'
+            ? 'Сервер отвечает слишком долго. Попробуйте ещё раз.'
+            : error.error?.message || 'Не удалось подтвердить код',
+        );
       },
     });
   }
 
+  /**
+   * Вернуться на экран ввода телефона, не перезагружая страницу.
+   */
   changePhone(): void {
-    this.codeRequested = false;
+    this.codeRequested.set(false);
     this.verificationPhone = '';
-    this.code = '';
-    this.devCode = null;
-    this.error = '';
+    this.code.set('');
+    this.devCode.set(null);
+    this.error.set('');
   }
 
   private normalizePhone(phone: string): string {

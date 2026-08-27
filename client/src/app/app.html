@@ -11,38 +11,44 @@
       <h2>Добро пожаловать 👋</h2>
 
       <p class="description">
-        {{ codeRequested ? 'Введите код из SMS.' : 'Введите номер телефона, чтобы войти в программу лояльности.' }}
+        {{ codeRequested() ? 'Введите код из SMS.' : 'Введите номер телефона, чтобы войти в программу лояльности.' }}
       </p>
 
-      @if (!codeRequested) {
+      @if (!codeRequested()) {
       <form (ngSubmit)="login()">
 
         <input
           type="tel"
           name="phone"
-          [(ngModel)]="phone"
+          [ngModel]="phone()"
+          (ngModelChange)="phone.set($event)"
           placeholder="+998 90 123 45 67"
           required
         />
 
         <button
           type="submit"
-          [disabled]="loading"
+          [disabled]="loading()"
         >
-          {{ loading ? 'Вход...' : 'Продолжить' }}
+          {{ loading() ? 'Вход...' : 'Продолжить' }}
         </button>
 
       </form>
       } @else {
-      @if (devCode) {
-        <p class="dev-code">Тестовый режим — ваш код: {{ devCode }}</p>
-      }
-
       <form (ngSubmit)="verifyCode()">
+
+        @if (devCode()) {
+          <p class="dev-code-hint">
+            🧪 Тестовый режим — реальный SMS-провайдер ещё не подключён.<br />
+            Ваш код: <strong>{{ devCode() }}</strong>
+          </p>
+        }
+
         <input
           type="text"
           name="code"
-          [(ngModel)]="code"
+          [ngModel]="code()"
+          (ngModelChange)="code.set($event)"
           placeholder="123456"
           inputmode="numeric"
           maxlength="6"
@@ -53,7 +59,8 @@
         <input
           type="text"
           name="name"
-          [(ngModel)]="name"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
           placeholder="Ваше имя"
           autocomplete="name"
           required
@@ -61,23 +68,24 @@
 
         <button
           type="submit"
-          [disabled]="loading"
+          [disabled]="loading()"
         >
-          {{ loading ? 'Проверка...' : 'Подтвердить код' }}
+          {{ loading() ? 'Проверка...' : 'Подтвердить код' }}
         </button>
-      </form>
 
-      <button
-        type="button"
-        class="change-phone"
-        (click)="changePhone()"
-      >
-        Изменить номер
-      </button>
+        <button
+          type="button"
+          class="link-button"
+          (click)="changePhone()"
+        >
+          ← Изменить номер
+        </button>
+
+      </form>
       }
 
-      @if (error) {
-        <p class="error">{{ error }}</p>
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
       }
 
     </section>

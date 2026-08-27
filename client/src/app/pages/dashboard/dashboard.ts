@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
@@ -50,35 +50,39 @@ interface Review {
   styleUrl: './dashboard.scss',
 })
 export class Dashboard implements OnInit, OnDestroy {
-  stores: Store[] = [];
-  selectedStore: Store | null = null;
-  wallet: Wallet | null = null;
-  transactions: Transaction[] = [];
-  storeIdInput = '';
-  qrImageUrl: string | null = null;
-  showQr = false;
-  loadingStores = true;
-  loadingStoreData = false;
-  joiningStore = false;
-  loadingQr = false;
-  error = '';
-  storeError = '';
-  qrError = '';
+  // Это zoneless-приложение (без zone.js) — все поля, которые меняются
+  // внутри HTTP-callback'ов, ОБЯЗАНЫ быть signals, иначе экран не
+  // перерисуется сам после ответа сервера (баг "зависшего" интерфейса,
+  // который был на экране входа — та же причина).
+  stores = signal<Store[]>([]);
+  selectedStore = signal<Store | null>(null);
+  wallet = signal<Wallet | null>(null);
+  transactions = signal<Transaction[]>([]);
+  storeIdInput = signal('');
+  qrImageUrl = signal<string | null>(null);
+  showQr = signal(false);
+  loadingStores = signal(true);
+  loadingStoreData = signal(false);
+  joiningStore = signal(false);
+  loadingQr = signal(false);
+  error = signal('');
+  storeError = signal('');
+  qrError = signal('');
 
   // Акции
-  promotions: Promotion[] = [];
-  loadingPromotions = false;
-  promotionsError = '';
+  promotions = signal<Promotion[]>([]);
+  loadingPromotions = signal(false);
+  promotionsError = signal('');
 
   // Отзывы — показываются вместо акций, если у магазина нет активной акции
-  reviews: Review[] = [];
-  loadingReviews = false;
-  reviewsError = '';
-  reviewRatingInput = 5;
-  reviewCommentInput = '';
-  submittingReview = false;
-  reviewSubmitError = '';
-  reviewSubmitSuccess = false;
+  reviews = signal<Review[]>([]);
+  loadingReviews = signal(false);
+  reviewsError = signal('');
+  reviewRatingInput = signal(5);
+  reviewCommentInput = signal('');
+  submittingReview = signal(false);
+  reviewSubmitError = signal('');
+  reviewSubmitSuccess = signal(false);
 
   private readonly apiUrl = 'http://localhost:3000';
 
@@ -92,38 +96,40 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.qrImageUrl) {
-      URL.revokeObjectURL(this.qrImageUrl);
+    const url = this.qrImageUrl();
+    if (url) {
+      URL.revokeObjectURL(url);
     }
   }
 
   loadStores(): void {
-    this.loadingStores = true;
-    this.storeError = '';
+    this.loadingStores.set(true);
+    this.storeError.set('');
 
     this.http.get<{ stores: Store[] }>(`${this.apiUrl}/stores/my`).subscribe({
       next: ({ stores }) => {
-        this.stores = stores;
-        const selected = this.selectedStore
-          ? stores.find((store) => store.id === this.selectedStore?.id)
+        this.stores.set(stores);
+        const currentSelected = this.selectedStore();
+        const selected = currentSelected
+          ? stores.find((store) => store.id === currentSelected.id)
           : stores[0];
         this.selectStore(selected ?? null);
-        this.loadingStores = false;
+        this.loadingStores.set(false);
       },
       error: (error) => {
-        this.storeError = error.error?.message || 'Не удалось загрузить магазины';
-        this.loadingStores = false;
+        this.storeError.set(error.error?.message || 'Не удалось загрузить магазины');
+        this.loadingStores.set(false);
       },
     });
   }
 
   selectStore(store: Store | null): void {
-    this.selectedStore = store;
-    this.wallet = null;
-    this.transactions = [];
-    this.promotions = [];
-    this.reviews = [];
-    this.error = '';
+    this.selectedStore.set(store);
+    this.wallet.set(null);
+    this.transactions.set([]);
+    this.promotions.set([]);
+    this.reviews.set([]);
+    this.error.set('');
     this.resetReviewForm();
     if (store) {
       this.loadStoreData(store.id);
@@ -132,53 +138,53 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   selectStoreById(storeId: number): void {
-    this.selectStore(this.stores.find((store) => store.id === Number(storeId)) ?? null);
+    this.selectStore(this.stores().find((store) => store.id === Number(storeId)) ?? null);
   }
 
   joinStore(): void {
-    const storeId = Number(this.storeIdInput);
+    const storeId = Number(this.storeIdInput());
     if (!Number.isInteger(storeId) || storeId <= 0) {
-      this.storeError = 'Введите корректный ID магазина';
+      this.storeError.set('Введите корректный ID магазина');
       return;
     }
 
-    this.joiningStore = true;
-    this.storeError = '';
+    this.joiningStore.set(true);
+    this.storeError.set('');
     this.http.post(`${this.apiUrl}/stores/${storeId}/join`, {}).subscribe({
       next: () => {
-        this.storeIdInput = '';
-        this.joiningStore = false;
+        this.storeIdInput.set('');
+        this.joiningStore.set(false);
         this.loadStores();
       },
       error: (error) => {
-        this.storeError = error.error?.message || 'Не удалось добавить магазин';
-        this.joiningStore = false;
+        this.storeError.set(error.error?.message || 'Не удалось добавить магазин');
+        this.joiningStore.set(false);
       },
     });
   }
 
   openQr(): void {
-    this.showQr = true;
-    this.qrError = '';
-    if (this.qrImageUrl || this.loadingQr) {
+    this.showQr.set(true);
+    this.qrError.set('');
+    if (this.qrImageUrl() || this.loadingQr()) {
       return;
     }
 
-    this.loadingQr = true;
+    this.loadingQr.set(true);
     this.http.get(`${this.apiUrl}/users/me/qr/image`, { responseType: 'blob' }).subscribe({
       next: (image) => {
-        this.qrImageUrl = URL.createObjectURL(image);
-        this.loadingQr = false;
+        this.qrImageUrl.set(URL.createObjectURL(image));
+        this.loadingQr.set(false);
       },
       error: () => {
-        this.qrError = 'Не удалось загрузить QR-код';
-        this.loadingQr = false;
+        this.qrError.set('Не удалось загрузить QR-код');
+        this.loadingQr.set(false);
       },
     });
   }
 
   closeQr(): void {
-    this.showQr = false;
+    this.showQr.set(false);
   }
 
   logout(): void {
@@ -202,65 +208,67 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   submitReview(): void {
-    if (this.submittingReview || !this.selectedStore) {
+    const store = this.selectedStore();
+    if (this.submittingReview() || !store) {
       return;
     }
 
-    if (!Number.isInteger(this.reviewRatingInput) || this.reviewRatingInput < 1 || this.reviewRatingInput > 5) {
-      this.reviewSubmitError = 'Выберите оценку от 1 до 5';
+    const rating = this.reviewRatingInput();
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      this.reviewSubmitError.set('Выберите оценку от 1 до 5');
       return;
     }
 
-    this.submittingReview = true;
-    this.reviewSubmitError = '';
-    this.reviewSubmitSuccess = false;
+    this.submittingReview.set(true);
+    this.reviewSubmitError.set('');
+    this.reviewSubmitSuccess.set(false);
 
-    const storeId = this.selectedStore.id;
+    const storeId = store.id;
 
     this.http
       .post(`${this.apiUrl}/reviews`, {
         storeId,
-        rating: this.reviewRatingInput,
-        comment: this.reviewCommentInput.trim() || null,
+        rating,
+        comment: this.reviewCommentInput().trim() || null,
       })
       .subscribe({
         next: () => {
-          this.submittingReview = false;
-          this.reviewSubmitSuccess = true;
+          this.submittingReview.set(false);
+          this.reviewSubmitSuccess.set(true);
           this.resetReviewForm(true);
           this.loadReviews(storeId);
         },
         error: (error) => {
-          this.submittingReview = false;
-          this.reviewSubmitError = error.error?.message || 'Не удалось отправить отзыв';
+          this.submittingReview.set(false);
+          this.reviewSubmitError.set(error.error?.message || 'Не удалось отправить отзыв');
         },
       });
   }
 
   private resetReviewForm(keepSuccessFlag = false): void {
-    this.reviewRatingInput = 5;
-    this.reviewCommentInput = '';
-    this.reviewSubmitError = '';
+    this.reviewRatingInput.set(5);
+    this.reviewCommentInput.set('');
+    this.reviewSubmitError.set('');
     if (!keepSuccessFlag) {
-      this.reviewSubmitSuccess = false;
+      this.reviewSubmitSuccess.set(false);
     }
   }
 
   private loadStoreData(storeId: number): void {
-    this.loadingStoreData = true;
+    this.loadingStoreData.set(true);
     this.http.get<{ wallet: Wallet }>(`${this.apiUrl}/wallet/${storeId}`).subscribe({
       next: ({ wallet }) => {
         if (wallet.store_id !== storeId) {
-          this.error = 'Сервер вернул кошелёк другого магазина';
-          this.loadingStoreData = false;
+          this.error.set('Сервер вернул кошелёк другого магазина');
+          this.loadingStoreData.set(false);
           return;
         }
-        this.wallet = wallet;
+        this.wallet.set(wallet);
         this.loadTransactions(storeId);
       },
       error: (error) => {
-        this.error = error.error?.message || 'Не удалось загрузить баланс';
-        this.loadingStoreData = false;
+        this.error.set(error.error?.message || 'Не удалось загрузить баланс');
+        this.loadingStoreData.set(false);
       },
     });
   }
@@ -270,19 +278,19 @@ export class Dashboard implements OnInit, OnDestroy {
       .get<{ transactions: Transaction[] }>(`${this.apiUrl}/wallet/${storeId}/transactions`)
       .subscribe({
         next: ({ transactions }) => {
-          this.transactions = transactions;
-          this.loadingStoreData = false;
+          this.transactions.set(transactions);
+          this.loadingStoreData.set(false);
         },
         error: (error) => {
-          this.error = error.error?.message || 'Не удалось загрузить историю операций';
-          this.loadingStoreData = false;
+          this.error.set(error.error?.message || 'Не удалось загрузить историю операций');
+          this.loadingStoreData.set(false);
         },
       });
   }
 
   private loadPromotions(storeId: number): void {
-    this.loadingPromotions = true;
-    this.promotionsError = '';
+    this.loadingPromotions.set(true);
+    this.promotionsError.set('');
 
     this.http
       .get<{ promotions: Promotion[] }>(`${this.apiUrl}/promotions`, {
@@ -290,8 +298,8 @@ export class Dashboard implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ promotions }) => {
-          this.promotions = promotions;
-          this.loadingPromotions = false;
+          this.promotions.set(promotions);
+          this.loadingPromotions.set(false);
 
           // Отзывы нужны только как fallback, когда акций нет —
           // не грузим их заранее, если в них нет необходимости.
@@ -300,8 +308,8 @@ export class Dashboard implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          this.promotionsError = error.error?.message || 'Не удалось загрузить акции';
-          this.loadingPromotions = false;
+          this.promotionsError.set(error.error?.message || 'Не удалось загрузить акции');
+          this.loadingPromotions.set(false);
           // Если акции не загрузились — всё равно показываем отзывы,
           // чтобы блок не был пустым.
           this.loadReviews(storeId);
@@ -310,8 +318,8 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   private loadReviews(storeId: number): void {
-    this.loadingReviews = true;
-    this.reviewsError = '';
+    this.loadingReviews.set(true);
+    this.reviewsError.set('');
 
     this.http
       .get<{ reviews: Review[] }>(`${this.apiUrl}/reviews`, {
@@ -319,12 +327,12 @@ export class Dashboard implements OnInit, OnDestroy {
       })
       .subscribe({
         next: ({ reviews }) => {
-          this.reviews = reviews;
-          this.loadingReviews = false;
+          this.reviews.set(reviews);
+          this.loadingReviews.set(false);
         },
         error: (error) => {
-          this.reviewsError = error.error?.message || 'Не удалось загрузить отзывы';
-          this.loadingReviews = false;
+          this.reviewsError.set(error.error?.message || 'Не удалось загрузить отзывы');
+          this.loadingReviews.set(false);
         },
       });
   }
