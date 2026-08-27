@@ -11,9 +11,10 @@
       <h2>Добро пожаловать 👋</h2>
 
       <p class="description">
-        Введите номер телефона, чтобы войти в программу лояльности.
+        {{ codeRequested ? 'Введите код из SMS.' : 'Введите номер телефона, чтобы войти в программу лояльности.' }}
       </p>
 
+      @if (!codeRequested) {
       <form (ngSubmit)="login()">
 
         <input
@@ -32,6 +33,48 @@
         </button>
 
       </form>
+      } @else {
+      @if (devCode) {
+        <p class="dev-code">Тестовый режим — ваш код: {{ devCode }}</p>
+      }
+
+      <form (ngSubmit)="verifyCode()">
+        <input
+          type="text"
+          name="code"
+          [(ngModel)]="code"
+          placeholder="123456"
+          inputmode="numeric"
+          maxlength="6"
+          autocomplete="one-time-code"
+          required
+        />
+
+        <input
+          type="text"
+          name="name"
+          [(ngModel)]="name"
+          placeholder="Ваше имя"
+          autocomplete="name"
+          required
+        />
+
+        <button
+          type="submit"
+          [disabled]="loading"
+        >
+          {{ loading ? 'Проверка...' : 'Подтвердить код' }}
+        </button>
+      </form>
+
+      <button
+        type="button"
+        class="change-phone"
+        (click)="changePhone()"
+      >
+        Изменить номер
+      </button>
+      }
 
       @if (error) {
         <p class="error">{{ error }}</p>
