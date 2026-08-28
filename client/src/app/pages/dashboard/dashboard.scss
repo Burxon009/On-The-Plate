@@ -384,3 +384,79 @@
   font-size: 12px;
   color: #16834a;
 }
+
+/* WHITE-LABEL: логотип и акцентный цвет магазина */
+
+.wallet-card {
+  border-top: 4px solid var(--brand-color, #171717);
+}
+
+.wallet-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.store-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* REWARDS */
+
+.rewards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reward-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+}
+
+.reward-card.available {
+  border: 1px solid #f0d060;
+  background: #fffbea;
+}
+
+.reward-card.redeemed {
+  opacity: .6;
+}
+
+.reward-icon {
+  font-size: 22px;
+}
+
+.reward-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reward-body strong {
+  font-size: 14px;
+}
+
+.reward-body span {
+  font-size: 11px;
+  color: #999;
+}
+
+.redeemed-rewards {
+  margin-top: 12px;
+}
+
+.redeemed-rewards summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+}

@@ -44,6 +44,16 @@ interface Review {
   author_name: string | null;
 }
 
+interface Reward {
+  id: number;
+  store_id: number;
+  promotion_id: number | null;
+  title: string;
+  is_redeemed: boolean;
+  redeemed_at: string | null;
+  created_at: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   imports: [DecimalPipe, DatePipe, FormsModule],
@@ -84,6 +94,11 @@ export class Dashboard implements OnInit, OnDestroy {
   submittingReview = signal(false);
   reviewSubmitError = signal('');
   reviewSubmitSuccess = signal(false);
+
+  // Rewards
+  rewards = signal<Reward[]>([]);
+  loadingRewards = signal(false);
+  rewardsError = signal('');
 
   private readonly apiUrl = 'http://localhost:3000';
 
@@ -130,11 +145,13 @@ export class Dashboard implements OnInit, OnDestroy {
     this.transactions.set([]);
     this.promotions.set([]);
     this.reviews.set([]);
+    this.rewards.set([]);
     this.error.set('');
     this.resetReviewForm();
     if (store) {
       this.loadStoreData(store.id);
       this.loadPromotions(store.id);
+      this.loadRewards(store.id);
     }
   }
 
@@ -334,6 +351,34 @@ export class Dashboard implements OnInit, OnDestroy {
         error: (error) => {
           this.reviewsError.set(error.error?.message || 'Не удалось загрузить отзывы');
           this.loadingReviews.set(false);
+        },
+      });
+  }
+
+  availableRewards(): Reward[] {
+    return this.rewards().filter((reward) => !reward.is_redeemed);
+  }
+
+  redeemedRewards(): Reward[] {
+    return this.rewards().filter((reward) => reward.is_redeemed);
+  }
+
+  private loadRewards(storeId: number): void {
+    this.loadingRewards.set(true);
+    this.rewardsError.set('');
+
+    this.http
+      .get<{ rewards: Reward[] }>(`${this.apiUrl}/rewards`, {
+        params: { storeId },
+      })
+      .subscribe({
+        next: ({ rewards }) => {
+          this.rewards.set(rewards);
+          this.loadingRewards.set(false);
+        },
+        error: (error) => {
+          this.rewardsError.set(error.error?.message || 'Не удалось загрузить награды');
+          this.loadingRewards.set(false);
         },
       });
   }

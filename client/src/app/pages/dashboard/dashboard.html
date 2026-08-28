@@ -191,7 +191,49 @@
 
     <section class="section client-block">
       <div class="section-title"><h2>Rewards</h2></div>
-      <p>Доступных наград пока нет.</p>
+
+      @if (loadingRewards()) {
+        <p>Загрузка наград...</p>
+      } @else if (rewardsError()) {
+        <p class="error">{{ rewardsError() }}</p>
+      } @else {
+        @if (availableRewards().length === 0 && redeemedRewards().length === 0) {
+          <p>Пока наград нет — они появятся, как только вы выполните условия акции.</p>
+        } @else {
+          @if (availableRewards().length > 0) {
+            <div class="rewards-list">
+              @for (reward of availableRewards(); track reward.id) {
+                <div class="reward-card available">
+                  <span class="reward-icon">🎁</span>
+                  <div class="reward-body">
+                    <strong>{{ reward.title }}</strong>
+                    <span>Покажите эту награду на кассе</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (redeemedRewards().length > 0) {
+            <details class="redeemed-rewards">
+              <summary>Использованные награды ({{ redeemedRewards().length }})</summary>
+              <div class="rewards-list">
+                @for (reward of redeemedRewards(); track reward.id) {
+                  <div class="reward-card redeemed">
+                    <span class="reward-icon">✅</span>
+                    <div class="reward-body">
+                      <strong>{{ reward.title }}</strong>
+                      @if (reward.redeemed_at) {
+                        <span>Использовано {{ reward.redeemed_at | date:'dd.MM.yyyy' }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </details>
+          }
+        }
+      }
     </section>
 
     <section class="section client-block">
