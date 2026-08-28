@@ -238,7 +238,53 @@
 
     <section class="section client-block">
       <div class="section-title"><h2>Меню</h2></div>
-      <p>Меню магазина пока недоступно.</p>
+
+      @if (loadingMenu()) {
+        <p>Загрузка меню...</p>
+      } @else if (menuError()) {
+        <p class="error">{{ menuError() }}</p>
+      } @else if (menuCategories().length === 0) {
+        <p>Меню магазина пока недоступно.</p>
+      } @else {
+        <div class="menu-categories">
+          @for (category of menuCategories(); track category.id) {
+            <button
+              type="button"
+              class="menu-category-tab"
+              [class.active]="selectedCategoryId() === category.id"
+              (click)="selectCategory(category.id)"
+            >
+              {{ category.name }}
+            </button>
+          }
+        </div>
+
+        @if (productsInSelectedCategory().length === 0) {
+          <p>В этой категории пока нет товаров.</p>
+        } @else {
+          <div class="menu-products">
+            @for (product of productsInSelectedCategory(); track product.id) {
+              <div class="menu-product-card">
+                @if (product.image_url) {
+                  <img class="menu-product-image" [src]="product.image_url" [alt]="product.name" />
+                }
+                <div class="menu-product-body">
+                  <strong>{{ product.name }}</strong>
+                  @if (product.description) {
+                    <span class="menu-product-description">{{ product.description }}</span>
+                  }
+                  <div class="menu-product-footer">
+                    <span class="menu-product-price">{{ product.price | number }} сум</span>
+                    @if (estimatedProductCashback(product) > 0) {
+                      <span class="menu-product-cashback">+{{ estimatedProductCashback(product) | number }} кэшбэк</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
     </section>
 
     <section class="section client-block">

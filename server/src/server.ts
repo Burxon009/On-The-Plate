@@ -7,6 +7,7 @@ import purchaseRoutes from "./purchaseRoutes";
 import promotionRoutes from "./promotionRoutes";
 import rewardRoutes from "./rewardRoutes";
 import reviewRoutes from "./reviewRoutes";
+import menuRoutes from "./menuRoutes";
 import { pool } from "./db";
 
 const app = express();
@@ -30,6 +31,7 @@ app.use("/purchases", purchaseRoutes);
 app.use("/promotions", promotionRoutes);
 app.use("/rewards", rewardRoutes);
 app.use("/reviews", reviewRoutes);
+app.use("/menu", menuRoutes);
 
 const PORT = 3000;
 

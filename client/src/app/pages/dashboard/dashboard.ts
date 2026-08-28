@@ -54,6 +54,21 @@ interface Reward {
   created_at: string;
 }
 
+interface MenuCategory {
+  id: number;
+  name: string;
+  sort_order: number;
+}
+
+interface MenuProduct {
+  id: number;
+  category_id: number | null;
+  name: string;
+  description: string | null;
+  price: number | string;
+  image_url: string | null;
+}
+
 @Component({
   selector: 'app-dashboard',
   imports: [DecimalPipe, DatePipe, FormsModule],
@@ -99,6 +114,13 @@ export class Dashboard implements OnInit, OnDestroy {
   rewards = signal<Reward[]>([]);
   loadingRewards = signal(false);
   rewardsError = signal('');
+
+  // Меню
+  menuCategories = signal<MenuCategory[]>([]);
+  menuProducts = signal<MenuProduct[]>([]);
+  loadingMenu = signal(false);
+  menuError = signal('');
+  selectedCategoryId = signal<number | null>(null);
 
   private readonly apiUrl = 'http://localhost:3000';
 
@@ -146,12 +168,16 @@ export class Dashboard implements OnInit, OnDestroy {
     this.promotions.set([]);
     this.reviews.set([]);
     this.rewards.set([]);
+    this.menuCategories.set([]);
+    this.menuProducts.set([]);
+    this.selectedCategoryId.set(null);
     this.error.set('');
     this.resetReviewForm();
     if (store) {
       this.loadStoreData(store.id);
       this.loadPromotions(store.id);
       this.loadRewards(store.id);
+      this.loadMenu(store.id);
     }
   }
 
@@ -379,6 +405,51 @@ export class Dashboard implements OnInit, OnDestroy {
         error: (error) => {
           this.rewardsError.set(error.error?.message || 'Не удалось загрузить награды');
           this.loadingRewards.set(false);
+        },
+      });
+  }
+
+  selectCategory(categoryId: number | null): void {
+    this.selectedCategoryId.set(categoryId);
+  }
+
+  productsInSelectedCategory(): MenuProduct[] {
+    const categoryId = this.selectedCategoryId();
+    return this.menuProducts().filter((product) => product.category_id === categoryId);
+  }
+
+  /**
+   * Оценочный кешбэк за товар — считается на фронте по цене товара
+   * и общему проценту магазина (отдельного кешбэка на товар в БД нет).
+   */
+  estimatedProductCashback(product: MenuProduct): number {
+    const store = this.selectedStore();
+    if (!store) {
+      return 0;
+    }
+    const percent = Number(store.cashback_percent) || 0;
+    const price = Number(product.price) || 0;
+    return Math.round((price * percent) / 100);
+  }
+
+  private loadMenu(storeId: number): void {
+    this.loadingMenu.set(true);
+    this.menuError.set('');
+
+    this.http
+      .get<{ categories: MenuCategory[]; products: MenuProduct[] }>(`${this.apiUrl}/menu`, {
+        params: { storeId },
+      })
+      .subscribe({
+        next: ({ categories, products }) => {
+          this.menuCategories.set(categories);
+          this.menuProducts.set(products);
+          this.selectedCategoryId.set(categories[0]?.id ?? null);
+          this.loadingMenu.set(false);
+        },
+        error: (error) => {
+          this.menuError.set(error.error?.message || 'Не удалось загрузить меню');
+          this.loadingMenu.set(false);
         },
       });
   }
