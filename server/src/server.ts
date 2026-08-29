@@ -8,6 +8,8 @@ import promotionRoutes from "./promotionRoutes";
 import rewardRoutes from "./rewardRoutes";
 import reviewRoutes from "./reviewRoutes";
 import menuRoutes from "./menuRoutes";
+import homeBlockRoutes from "./homeBlockRoutes";
+import messageRoutes from "./messageRoutes";
 import { pool } from "./db";
 
 const app = express();
@@ -32,6 +34,8 @@ app.use("/promotions", promotionRoutes);
 app.use("/rewards", rewardRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/menu", menuRoutes);
+app.use("/home-blocks", homeBlockRoutes);
+app.use("/messages", messageRoutes);
 
 const PORT = 3000;
 

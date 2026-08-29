@@ -550,3 +550,63 @@
   padding: 2px 8px;
   border-radius: 999px;
 }
+
+/* HOME BLOCK ORDERING */
+/* Порядок и видимость блоков задаёт ADMIN (через store_home_blocks).
+   CSS order работает только внутри flex-контейнера — .section внутри
+   сохраняет свои обычные отступы (margin-top). */
+
+.home-blocks {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-blocks .section {
+  order: 999;
+}
+
+/* MESSAGES */
+
+.unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e0433d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message-card {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+  cursor: pointer;
+}
+
+.message-card.unread {
+  border-left: 3px solid #171717;
+  background: #fafafa;
+}
+
+.message-card p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #333;
+}
+
+.message-date {
+  font-size: 10px;
+  color: #999;
+}

@@ -69,6 +69,20 @@ interface MenuProduct {
   image_url: string | null;
 }
 
+interface HomeBlock {
+  block_key: string;
+  sort_order: number;
+  is_enabled: boolean;
+}
+
+interface StoreMessage {
+  id: number;
+  text: string;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   imports: [DecimalPipe, DatePipe, FormsModule],
@@ -122,6 +136,16 @@ export class Dashboard implements OnInit, OnDestroy {
   menuError = signal('');
   selectedCategoryId = signal<number | null>(null);
 
+  // Порядок и видимость блоков главного экрана — задаёт ADMIN.
+  // Если для магазина ничего не настроено, backend сам присылает
+  // разумный порядок по умолчанию (все блоки включены).
+  homeBlocks = signal<HomeBlock[]>([]);
+
+  // Сообщения от магазина
+  messages = signal<StoreMessage[]>([]);
+  loadingMessages = signal(false);
+  messagesError = signal('');
+
   private readonly apiUrl = 'http://localhost:3000';
 
   constructor(
@@ -171,6 +195,8 @@ export class Dashboard implements OnInit, OnDestroy {
     this.menuCategories.set([]);
     this.menuProducts.set([]);
     this.selectedCategoryId.set(null);
+    this.homeBlocks.set([]);
+    this.messages.set([]);
     this.error.set('');
     this.resetReviewForm();
     if (store) {
@@ -178,6 +204,8 @@ export class Dashboard implements OnInit, OnDestroy {
       this.loadPromotions(store.id);
       this.loadRewards(store.id);
       this.loadMenu(store.id);
+      this.loadHomeBlocks(store.id);
+      this.loadMessages(store.id);
     }
   }
 
@@ -450,6 +478,80 @@ export class Dashboard implements OnInit, OnDestroy {
         error: (error) => {
           this.menuError.set(error.error?.message || 'Не удалось загрузить меню');
           this.loadingMenu.set(false);
+        },
+      });
+  }
+
+  /**
+   * Позиция блока (для CSS order) по ключу. Блоки, о которых сервер
+   * ничего не прислал, уходят в конец в исходном порядке.
+   */
+  blockOrder(blockKey: string): number {
+    const index = this.homeBlocks().findIndex((block) => block.block_key === blockKey);
+    return index === -1 ? 999 : index;
+  }
+
+  /** Виден ли блок — по умолчанию true, пока конфигурация не загрузилась. */
+  blockVisible(blockKey: string): boolean {
+    const block = this.homeBlocks().find((b) => b.block_key === blockKey);
+    return block ? block.is_enabled : true;
+  }
+
+  private loadHomeBlocks(storeId: number): void {
+    this.http
+      .get<{ blocks: HomeBlock[] }>(`${this.apiUrl}/home-blocks`, {
+        params: { storeId },
+      })
+      .subscribe({
+        next: ({ blocks }) => {
+          this.homeBlocks.set(blocks);
+        },
+        error: () => {
+          // Если конфигурацию не удалось загрузить — блоки остаются
+          // в исходном порядке из шаблона, ничего не ломаем.
+        },
+      });
+  }
+
+  unreadMessagesCount(): number {
+    return this.messages().filter((message) => !message.is_read).length;
+  }
+
+  markMessageRead(message: StoreMessage): void {
+    if (message.is_read) {
+      return;
+    }
+
+    this.http.post(`${this.apiUrl}/messages/${message.id}/read`, {}).subscribe({
+      next: () => {
+        this.messages.set(
+          this.messages().map((m) =>
+            m.id === message.id ? { ...m, is_read: true, read_at: new Date().toISOString() } : m,
+          ),
+        );
+      },
+      error: () => {
+        // Не критично — сообщение просто останется непрочитанным визуально.
+      },
+    });
+  }
+
+  private loadMessages(storeId: number): void {
+    this.loadingMessages.set(true);
+    this.messagesError.set('');
+
+    this.http
+      .get<{ messages: StoreMessage[] }>(`${this.apiUrl}/messages`, {
+        params: { storeId },
+      })
+      .subscribe({
+        next: ({ messages }) => {
+          this.messages.set(messages);
+          this.loadingMessages.set(false);
+        },
+        error: (error) => {
+          this.messagesError.set(error.error?.message || 'Не удалось загрузить сообщения');
+          this.loadingMessages.set(false);
         },
       });
   }

@@ -90,7 +90,11 @@
       <p class="error">{{ error() }}</p>
     }
 
-    <section class="section client-block">
+    <div class="home-blocks">
+    <section class="section client-block"
+      [style.order]="blockOrder('promotions')"
+      [hidden]="!blockVisible('promotions')"
+    >
       @if (loadingPromotions()) {
         <div class="section-title"><h2>Акции</h2></div>
         <p>Загрузка акций...</p>
@@ -189,7 +193,10 @@
       }
     </section>
 
-    <section class="section client-block">
+    <section class="section client-block"
+      [style.order]="blockOrder('rewards')"
+      [hidden]="!blockVisible('rewards')"
+    >
       <div class="section-title"><h2>Rewards</h2></div>
 
       @if (loadingRewards()) {
@@ -236,7 +243,10 @@
       }
     </section>
 
-    <section class="section client-block">
+    <section class="section client-block"
+      [style.order]="blockOrder('menu')"
+      [hidden]="!blockVisible('menu')"
+    >
       <div class="section-title"><h2>Меню</h2></div>
 
       @if (loadingMenu()) {
@@ -287,17 +297,10 @@
       }
     </section>
 
-    <section class="section client-block">
-      <div class="section-title"><h2>Новинки</h2></div>
-      <p>Новинок пока нет.</p>
-    </section>
-
-    <section class="section client-block">
-      <div class="section-title"><h2>Сообщения</h2></div>
-      <p>Сообщений от магазина пока нет.</p>
-    </section>
-
-    <section class="section">
+    <section class="section"
+      [style.order]="blockOrder('history')"
+      [hidden]="!blockVisible('history')"
+    >
       <div class="section-title"><h2>История операций</h2></div>
       @if (loadingStoreData()) {
         <p>Загрузка истории...</p>
@@ -318,6 +321,45 @@
           }
         </div>
       }
+    </section>
+
+    <section class="section client-block"
+      [style.order]="blockOrder('messages')"
+      [hidden]="!blockVisible('messages')"
+    >
+      <div class="section-title">
+        <h2>Сообщения</h2>
+        @if (unreadMessagesCount() > 0) {
+          <span class="unread-badge">{{ unreadMessagesCount() }}</span>
+        }
+      </div>
+
+      @if (loadingMessages()) {
+        <p>Загрузка сообщений...</p>
+      } @else if (messagesError()) {
+        <p class="error">{{ messagesError() }}</p>
+      } @else if (messages().length === 0) {
+        <p>Сообщений от магазина пока нет.</p>
+      } @else {
+        <div class="messages-list">
+          @for (message of messages(); track message.id) {
+            <div
+              class="message-card"
+              [class.unread]="!message.is_read"
+              (click)="markMessageRead(message)"
+            >
+              <p>{{ message.text }}</p>
+              <span class="message-date">{{ message.created_at | date:'dd.MM.yyyy HH:mm' }}</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+    </div>
+
+    <section class="section client-block">
+      <div class="section-title"><h2>Новинки</h2></div>
+      <p>Новинок пока нет.</p>
     </section>
   }
 
