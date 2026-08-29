@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import {
   requestVerificationCode,
   verifyCode,
-  isValidPhone,
+  isValidEmail,
   VerificationError,
 } from "./verificationService";
 
@@ -16,28 +16,32 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET не задан в .env");
 }
 
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 /**
  * POST /auth/request-code
- * Шаг 1: клиент вводит телефон, получает SMS-код.
+ * Шаг 1: клиент вводит email, получает код подтверждения.
  *
  * В DEV-режиме (NODE_ENV !== "production") код возвращается
- * прямо в ответе — для тестирования без реального SMS-провайдера.
+ * прямо в ответе — для тестирования без реального email-провайдера.
  * В проде он никогда не возвращается наружу.
  */
 router.post("/request-code", async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { email } = req.body;
 
-    if (!isValidPhone(phone)) {
+    if (!isValidEmail(email)) {
       return res.status(400).json({
-        message: "Некорректный номер телефона. Формат: +998XXXXXXXXX",
+        message: "Некорректный email",
       });
     }
 
-    const result = await requestVerificationCode(phone);
+    const result = await requestVerificationCode(email);
 
     return res.json({
-      message: "Код отправлен ✅",
+      message: "Код отправлен на почту ✅",
       ...(result.devCode ? { devCode: result.devCode } : {}),
     });
   } catch (error) {
@@ -60,11 +64,11 @@ router.post("/request-code", async (req, res) => {
  */
 router.post("/verify-code", async (req, res) => {
   try {
-    const { phone, code, name } = req.body;
+    const { email, code, name } = req.body;
 
-    if (!isValidPhone(phone)) {
+    if (!isValidEmail(email)) {
       return res.status(400).json({
-        message: "Некорректный номер телефона. Формат: +998XXXXXXXXX",
+        message: "Некорректный email",
       });
     }
 
@@ -74,30 +78,31 @@ router.post("/verify-code", async (req, res) => {
       });
     }
 
-    await verifyCode(phone, code);
+    await verifyCode(email, code);
+
+    const normalizedEmail = normalizeEmail(email);
 
     let userResult = await pool.query(
-      "SELECT id, phone, name, role FROM users WHERE phone = $1",
-      [phone]
+      "SELECT id, email, name, role FROM users WHERE email = $1",
+      [normalizedEmail]
     );
 
     let user = userResult.rows[0];
 
     if (!user) {
       const createResult = await pool.query(
-        `INSERT INTO users (phone, name)
+        `INSERT INTO users (email, name)
          VALUES ($1, $2)
-         RETURNING id, phone, name, role`,
-        [phone, name || null]
+         RETURNING id, email, name, role`,
+        [normalizedEmail, name || null]
       );
 
       user = createResult.rows[0];
     } else if (name && !user.name) {
-      // Если имя не было сохранено раньше — сохраняем сейчас.
       const updateResult = await pool.query(
         `UPDATE users SET name = $1, updated_at = NOW()
          WHERE id = $2
-         RETURNING id, phone, name, role`,
+         RETURNING id, email, name, role`,
         [name, user.id]
       );
 

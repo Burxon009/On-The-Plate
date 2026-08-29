@@ -10,6 +10,9 @@ const router = Router();
 /**
  * POST /purchases
  * Создать покупку по QR клиента.
+ * Опционально: bonusesUsed — сколько бонусов клиент оплачивает
+ * (до 100% суммы покупки, ограничение только по реальному балансу).
+ * Кешбэк начисляется только с денежной части (amount - bonusesUsed).
  *
  * Доступ только для ADMIN, привязанного именно к этому storeId
  * (проверяется через storeAdminMiddleware) — не к любому магазину.
@@ -21,7 +24,7 @@ router.post(
   storeAdminMiddleware,
   async (req: AuthRequest, res) => {
     try {
-      const { qrToken, storeId, amount } = req.body;
+      const { qrToken, storeId, amount, bonusesUsed } = req.body;
 
       if (!qrToken || typeof qrToken !== "string") {
         return res.status(400).json({
@@ -38,6 +41,15 @@ router.post(
       if (!Number.isSafeInteger(amount) || amount <= 0) {
         return res.status(400).json({
           message: "Некорректная сумма покупки",
+        });
+      }
+
+      const bonusesUsedAmount =
+        bonusesUsed === undefined || bonusesUsed === null ? 0 : bonusesUsed;
+
+      if (!Number.isSafeInteger(bonusesUsedAmount) || bonusesUsedAmount < 0) {
+        return res.status(400).json({
+          message: "bonusesUsed должен быть целым числом, не меньше 0",
         });
       }
 
@@ -61,11 +73,15 @@ router.post(
       const result = await createPurchase(
         userId,
         storeId,
-        amount
+        amount,
+        bonusesUsedAmount
       );
 
       return res.status(201).json({
-        message: "Покупка создана, кешбэк начислен ✅",
+        message:
+          bonusesUsedAmount > 0
+            ? "Покупка создана, бонусы списаны, кешбэк начислен ✅"
+            : "Покупка создана, кешбэк начислен ✅",
         ...result,
       });
     } catch (error) {
@@ -76,12 +92,16 @@ router.post(
           ? error.message
           : "Ошибка создания покупки";
 
-      if (
-        message ===
-          "Пользователь не подключён к этому магазину" ||
-        message === "Магазин не найден или отключён" ||
-        message === "Кошелёк пользователя не найден"
-      ) {
+      const knownErrors = [
+        "Пользователь не подключён к этому магазину",
+        "Магазин не найден или отключён",
+        "Кошелёк пользователя не найден",
+        "Недостаточно бонусов для оплаты этой суммы",
+        "bonusesUsed не может быть больше суммы покупки",
+        "bonusesUsed должен быть целым числом, не меньше 0",
+      ];
+
+      if (knownErrors.includes(message)) {
         return res.status(400).json({
           message,
         });

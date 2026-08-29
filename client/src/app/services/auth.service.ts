@@ -5,7 +5,7 @@ import { Observable, tap } from 'rxjs';
 
 export interface User {
   id: number;
-  phone: string;
+  email: string;
   name: string | null;
   role: string;
   qr_token?: string;
@@ -41,14 +41,14 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
-  requestCode(phone: string): Observable<RequestCodeResponse> {
+  requestCode(email: string): Observable<RequestCodeResponse> {
     return this.http
-      .post<RequestCodeResponse>(`${this.apiUrl}/auth/request-code`, { phone });
+      .post<RequestCodeResponse>(`${this.apiUrl}/auth/request-code`, { email });
   }
 
-  verifyCode(phone: string, code: string, name: string): Observable<VerifyCodeResponse> {
+  verifyCode(email: string, code: string, name: string): Observable<VerifyCodeResponse> {
     return this.http
-      .post<VerifyCodeResponse>(`${this.apiUrl}/auth/verify-code`, { phone, code, name })
+      .post<VerifyCodeResponse>(`${this.apiUrl}/auth/verify-code`, { email, code, name })
       .pipe(
         tap(({ token, user }) => {
           localStorage.setItem(this.tokenKey, token);

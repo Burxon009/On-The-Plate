@@ -4,25 +4,26 @@
 
     <div class="logo">U</div>
 
-    <h1>Loyalty</h1>
+    <h1 style="font-size: 2rem; font-family: sans-serif;">On the plate</h1>
     <p class="subtitle">Loyalty</p>
 
     <section class="login">
       <h2>Добро пожаловать 👋</h2>
 
       <p class="description">
-        {{ codeRequested() ? 'Введите код из SMS.' : 'Введите номер телефона, чтобы войти в программу лояльности.' }}
+        {{ codeRequested() ? 'Введите код из письма.' : 'Введите email, чтобы войти в программу лояльности.' }}
       </p>
 
       @if (!codeRequested()) {
       <form (ngSubmit)="login()">
 
         <input
-          type="tel"
-          name="phone"
-          [ngModel]="phone()"
-          (ngModelChange)="phone.set($event)"
-          placeholder="+998 90 123 45 67"
+          type="email"
+          name="email"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          placeholder="you@example.com"
+          autocomplete="email"
           required
         />
 
@@ -39,7 +40,7 @@
 
         @if (devCode()) {
           <p class="dev-code-hint">
-            🧪 Тестовый режим — реальный SMS-провайдер ещё не подключён.<br />
+            Тестовый режим — реальный email-провайдер ещё не подключён.<br />
             Ваш код: <strong>{{ devCode() }}</strong>
           </p>
         }
@@ -76,9 +77,9 @@
         <button
           type="button"
           class="link-button"
-          (click)="changePhone()"
+          (click)="changeEmail()"
         >
-          ← Изменить номер
+          ← Изменить email
         </button>
 
       </form>

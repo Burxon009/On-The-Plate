@@ -28,7 +28,7 @@ router.get(
         `
         SELECT
           u.id,
-          u.phone,
+          u.email,
           u.name,
           u.role,
           u.qr_token,
@@ -65,26 +65,26 @@ router.post(
   adminMiddleware,
   async (req, res) => {
     try {
-      const { phone, name } = req.body;
+      const { email, name } = req.body;
 
-      if (!phone) {
+      if (!email) {
         return res.status(400).json({
-          message: "Телефон обязателен",
+          message: "Email обязателен",
         });
       }
 
       const result = await pool.query(
-        `INSERT INTO users (phone, name)
+        `INSERT INTO users (email, name)
          VALUES ($1, $2)
          RETURNING
           id,
-          phone,
+          email,
           name,
           role,
           qr_token,
           created_at,
           updated_at`,
-        [phone, name || null]
+        [email, name || null]
       );
 
       res.status(201).json(result.rows[0]);
@@ -109,7 +109,7 @@ router.get("/me", authMiddleware, async (req: AuthRequest, res) => {
     const result = await pool.query(
       `SELECT
         id,
-        phone,
+        email,
         name,
         role,
         qr_token,
@@ -243,7 +243,7 @@ router.post(
         `
         SELECT
           u.id,
-          u.phone,
+          u.email,
           u.name,
           u.role,
           u.created_at,

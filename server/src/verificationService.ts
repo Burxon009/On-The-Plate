@@ -1,12 +1,12 @@
 import crypto from "crypto";
 import { pool } from "./db";
-import { smsService } from "./smsService";
+import { emailService } from "./emailService";
 
 const CODE_TTL_MINUTES = 5;
 const RESEND_COOLDOWN_SECONDS = 60;
 
-// Формат: только Узбекистан, +998 и 9 цифр.
-const PHONE_REGEX = /^\+998\d{9}$/;
+// Простая, но рабочая проверка формата email.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CODE_PEPPER = process.env.CODE_PEPPER ?? process.env.JWT_SECRET ?? "";
 
@@ -14,49 +14,52 @@ if (!CODE_PEPPER) {
   throw new Error("CODE_PEPPER (или JWT_SECRET) не задан в .env");
 }
 
-export function isValidPhone(phone: unknown): phone is string {
-  return typeof phone === "string" && PHONE_REGEX.test(phone);
+export function isValidEmail(email: unknown): email is string {
+  return typeof email === "string" && EMAIL_REGEX.test(email);
 }
 
-function hashCode(phone: string, code: string): string {
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function hashCode(identifier: string, code: string): string {
   return crypto
     .createHmac("sha256", CODE_PEPPER)
-    .update(`${phone}:${code}`)
+    .update(`${identifier}:${code}`)
     .digest("hex");
 }
 
 function generateCode(): string {
-  // 6-значный код, без ведущего 0 не требуется — просто строка из цифр.
   return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
 }
 
 export class VerificationError extends Error {}
 
 /**
- * Запросить код подтверждения для номера телефона.
+ * Запросить код подтверждения на email.
  *
  * Возвращает код только в DEV-режиме (для тестирования без реального
- * SMS-провайдера). В проде код никогда не возвращается наружу —
- * он уходит через smsService.sendSms.
+ * email-провайдера). В проде код никогда не возвращается наружу —
+ * он уходит через emailService.sendEmail.
  */
 export async function requestVerificationCode(
-  phone: string
+  email: string
 ): Promise<{ devCode?: string }> {
-  if (!isValidPhone(phone)) {
-    throw new VerificationError(
-      "Некорректный номер телефона. Формат: +998XXXXXXXXX"
-    );
+  if (!isValidEmail(email)) {
+    throw new VerificationError("Некорректный email");
   }
+
+  const identifier = normalizeEmail(email);
 
   const recentResult = await pool.query(
     `
     SELECT created_at
     FROM verification_codes
-    WHERE phone = $1
+    WHERE identifier = $1
     ORDER BY created_at DESC
     LIMIT 1
     `,
-    [phone]
+    [identifier]
   );
 
   if (recentResult.rows.length > 0) {
@@ -72,20 +75,21 @@ export async function requestVerificationCode(
   }
 
   const code = generateCode();
-  const codeHash = hashCode(phone, code);
+  const codeHash = hashCode(identifier, code);
   const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000);
 
   await pool.query(
     `
-    INSERT INTO verification_codes (phone, code_hash, expires_at)
+    INSERT INTO verification_codes (identifier, code_hash, expires_at)
     VALUES ($1, $2, $3)
     `,
-    [phone, codeHash, expiresAt]
+    [identifier, codeHash, expiresAt]
   );
 
-  await smsService.sendSms(
-    phone,
-    `Код подтверждения U CAFE Loyalty: ${code}. Никому не сообщайте его.`
+  await emailService.sendEmail(
+    identifier,
+    "Код подтверждения On the plate",
+    `Ваш код подтверждения: ${code}. Никому не сообщайте его. Код действителен 5 минут.`
   );
 
   const isDev = process.env.NODE_ENV !== "production";
@@ -95,28 +99,23 @@ export async function requestVerificationCode(
 
 /**
  * Проверить код подтверждения.
- *
- * Бросает VerificationError с понятным сообщением, если код
- * неверный, истёк, уже использован или превышено число попыток.
  */
 export async function verifyCode(
-  phone: string,
+  email: string,
   code: string
 ): Promise<void> {
-  if (!isValidPhone(phone)) {
-    throw new VerificationError(
-      "Некорректный номер телефона. Формат: +998XXXXXXXXX"
-    );
+  if (!isValidEmail(email)) {
+    throw new VerificationError("Некорректный email");
   }
 
   if (typeof code !== "string" || !/^\d{6}$/.test(code)) {
     throw new VerificationError("Код должен состоять из 6 цифр");
   }
 
+  const identifier = normalizeEmail(email);
+
   const client = await pool.connect();
 
-  // Установлено, если код неверный — бросаем ошибку ПОСЛЕ COMMIT,
-  // чтобы не пытаться сделать ROLLBACK по уже закоммиченной транзакции.
   let wrongCodeError: VerificationError | null = null;
 
   try {
@@ -126,26 +125,24 @@ export async function verifyCode(
       `
       SELECT id, code_hash, attempts, max_attempts, expires_at, consumed_at
       FROM verification_codes
-      WHERE phone = $1
+      WHERE identifier = $1
       ORDER BY created_at DESC
       LIMIT 1
       FOR UPDATE
       `,
-      [phone]
+      [identifier]
     );
 
     if (result.rows.length === 0) {
       throw new VerificationError(
-        "Код не запрошен для этого номера. Сначала запросите код."
+        "Код не запрошен для этого email. Сначала запросите код."
       );
     }
 
     const row = result.rows[0];
 
     if (row.consumed_at) {
-      throw new VerificationError(
-        "Код уже использован. Запросите новый."
-      );
+      throw new VerificationError("Код уже использован. Запросите новый.");
     }
 
     if (new Date(row.expires_at).getTime() < Date.now()) {
@@ -158,7 +155,7 @@ export async function verifyCode(
       );
     }
 
-    const expectedHash = hashCode(phone, code);
+    const expectedHash = hashCode(identifier, code);
     const isMatch = expectedHash === row.code_hash;
 
     if (!isMatch) {

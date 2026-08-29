@@ -265,7 +265,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   userLabel(): string {
     const user = this.auth.user();
-    return user?.name || user?.phone || 'Клиент';
+    return user?.name || user?.email || 'Клиент';
   }
 
   transactionSign(transaction: Transaction): string {
