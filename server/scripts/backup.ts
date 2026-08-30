@@ -62,6 +62,12 @@ function pruneOldBackups(): number {
   return removed;
 }
 
+/**
+ * Логгер асинхронный (worker-транспорт). Форсированный process.exit()
+ * оборвал бы запись последней строки в файл, поэтому на любом исходе
+ * выходим через process.exitCode + return: процесс завершится сам, когда
+ * pino допишет буфер (pino вешает обработчик на 'exit'/'beforeExit').
+ */
 function main(): void {
   const dbName = process.env.DB_NAME;
   const dbHost = process.env.DB_HOST ?? "localhost";
@@ -71,7 +77,8 @@ function main(): void {
 
   if (!dbName || !dbUser || !dbPassword) {
     logger.error("Резервное копирование прервано: не заданы DB_NAME / DB_USER / DB_PASSWORD в .env");
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   mkdirSync(backupsDir, { recursive: true });
@@ -100,7 +107,8 @@ function main(): void {
 
   if (result.error) {
     logger.error({ err: result.error, pgDump }, "Не удалось запустить pg_dump");
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (result.status !== 0) {
@@ -110,7 +118,8 @@ function main(): void {
     );
     // Частично записанный файл лучше убрать.
     if (existsSync(outPath)) unlinkSync(outPath);
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   const sizeBytes = statSync(outPath).size;
@@ -125,15 +134,13 @@ function main(): void {
   );
 
   // Человекочитаемое подтверждение для интерактивного запуска. Прямой
-  // синхронный stdout.write, а не pino-pretty: после spawnSync поток
-  // pino-pretty не успевает сброситься в консоль до выхода процесса,
-  // тогда как process.stdout.write() гарантированно доходит.
+  // синхронный stdout.write, а не pino-pretty: у асинхронного логгера
+  // pino-pretty не успевает сброситься в консоль в короткоживущем
+  // скрипте, а process.stdout.write() доходит гарантированно.
   process.stdout.write(
     `✅ Бэкап БД создан: ${outPath}\n` +
       `   размер: ${sizeKb} KB${removed > 0 ? `, удалено старых: ${removed}` : ""}\n`
   );
-
-  process.exit(0);
 }
 
 main();

@@ -14,18 +14,18 @@ import homeBlockRoutes from "./homeBlockRoutes";
 import messageRoutes from "./messageRoutes";
 import { pool } from "./db";
 import { cleanupVerificationCodes } from "./verificationService";
-import { logger } from "./logger";
+import { logger, crashLogger } from "./logger";
 
 // Логируем и завершаем процесс при неизвестной ошибке — не пытаемся
 // "продолжить работу" в неопределённом состоянии, но и не падаем молча.
-// Логгер синхронный, поэтому строка уже на диске к моменту process.exit().
+// crashLogger СИНХРОННЫЙ: стектрейс гарантированно на диске до process.exit().
 process.on("uncaughtException", (error) => {
-  logger.error({ err: error }, "uncaughtException — процесс завершается");
+  crashLogger.error({ err: error }, "uncaughtException — процесс завершается");
   process.exit(1);
 });
 process.on("unhandledRejection", (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
-  logger.error({ err }, "unhandledRejection — процесс завершается");
+  crashLogger.error({ err }, "unhandledRejection — процесс завершается");
   process.exit(1);
 });
 
