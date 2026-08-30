@@ -3,6 +3,7 @@ import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -58,7 +59,7 @@ router.get("/", authMiddleware, async (req, res) => {
       blocks: result.rows,
     });
   } catch (error) {
-    console.error("Ошибка получения блоков главного экрана:", error);
+    logger.error({ err: error }, "Ошибка получения блоков главного экрана");
 
     res.status(500).json({
       message: "Ошибка получения блоков главного экрана ❌",
@@ -138,7 +139,7 @@ router.post(
     } catch (error) {
       await client.query("ROLLBACK");
 
-      console.error("Ошибка сохранения блоков главного экрана:", error);
+      logger.error({ err: error }, "Ошибка сохранения блоков главного экрана");
 
       res.status(500).json({
         message: "Ошибка сохранения блоков главного экрана ❌",

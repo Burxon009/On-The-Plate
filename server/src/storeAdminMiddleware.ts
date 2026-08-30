@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "./authMiddleware";
 import { pool } from "./db";
+import { logger } from "./logger";
 
 /**
  * Проверяет, что текущий ADMIN привязан именно к тому магазину,
@@ -54,7 +55,7 @@ export async function storeAdminMiddleware(
 
     next();
   } catch (error) {
-    console.error("Ошибка проверки доступа к магазину:", error);
+    logger.error({ err: error }, "Ошибка проверки доступа к магазину");
 
     res.status(500).json({
       message: "Ошибка проверки доступа к магазину ❌",

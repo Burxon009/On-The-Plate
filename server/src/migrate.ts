@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { pool } from "./db";
+import { logger } from "./logger";
 
 async function migrate() {
   const migrationsDir = path.join(
@@ -28,14 +29,14 @@ async function migrate() {
     );
 
     if (alreadyExecuted.rows.length > 0) {
-      console.log(`⏭️ Пропускаем ${migration} — уже выполнена`);
+      logger.info(`⏭️ Пропускаем ${migration} — уже выполнена`);
       continue;
     }
 
     const filePath = path.join(migrationsDir, migration);
     const sql = fs.readFileSync(filePath, "utf-8");
 
-    console.log(`▶ Выполняем ${migration}...`);
+    logger.info(`▶ Выполняем ${migration}...`);
 
     await pool.query("BEGIN");
 
@@ -49,7 +50,7 @@ async function migrate() {
 
       await pool.query("COMMIT");
 
-      console.log(`✅ ${migration} выполнена`);
+      logger.info(`✅ ${migration} выполнена`);
     } catch (error) {
       await pool.query("ROLLBACK");
       throw error;
@@ -58,10 +59,10 @@ async function migrate() {
 
   await pool.end();
 
-  console.log("✅ Все миграции выполнены");
+  logger.info("✅ Все миграции выполнены");
 }
 
 migrate().catch((error) => {
-  console.error("❌ Ошибка миграции:", error);
+  logger.error({ err: error }, "❌ Ошибка миграции");
   process.exit(1);
 });

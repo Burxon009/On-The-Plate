@@ -12,6 +12,7 @@ import {
   revokeRefreshSession,
   rotateRefreshSession,
 } from "./sessionService";
+import { logger } from "./logger";
 
 const router = Router();
 const refreshCookieName = "ucafe_refresh";
@@ -80,7 +81,7 @@ router.post("/request-code", async (req, res) => {
     return res.json({ message: "Если адрес доступен, код будет отправлен" });
   } catch (error) {
     if (error instanceof VerificationError) return res.status(400).json({ message: error.message });
-    console.error("OTP request failed", error instanceof Error ? error.message : error);
+    logger.error({ err: error }, "OTP request failed");
     return res.status(500).json({ message: "Не удалось запросить код" });
   }
 });
@@ -122,7 +123,7 @@ router.post("/verify-code", async (req, res) => {
     }
   } catch (error) {
     if (error instanceof VerificationError) return res.status(400).json({ message: error.message });
-    console.error("OTP verification failed", error instanceof Error ? error.message : error);
+    logger.error({ err: error }, "OTP verification failed");
     return res.status(500).json({ message: "Не удалось завершить авторизацию" });
   }
 });
@@ -147,7 +148,7 @@ router.post("/refresh", async (req, res) => {
     return sendSession(res, req, userResult.rows[0], rotated.refreshToken);
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("Token refresh failed", error instanceof Error ? error.message : error);
+    logger.error({ err: error }, "Token refresh failed");
     return res.status(500).json({ message: "Unable to refresh session" });
   } finally {
     client.release();

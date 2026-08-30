@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import dotenv from "dotenv";
+import { logger } from "./logger";
 
 dotenv.config();
 
@@ -22,5 +23,5 @@ export const pool = new Pool({
 });
 
 pool.on("error", (error) => {
-  console.error("Unexpected PostgreSQL pool error:", error.message);
+  logger.error({ err: error }, "Unexpected PostgreSQL pool error");
 });

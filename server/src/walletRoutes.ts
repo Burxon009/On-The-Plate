@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.get(
         transactions: result.rows,
       });
     } catch (error) {
-      console.error("Ошибка получения истории:", error);
+      logger.error({ err: error }, "Ошибка получения истории");
 
       return res.status(500).json({
         message: "Ошибка получения истории ❌",
@@ -111,7 +112,7 @@ router.get(
         wallet: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка получения кошелька:", error);
+      logger.error({ err: error }, "Ошибка получения кошелька");
 
       return res.status(500).json({
         message: "Ошибка получения кошелька ❌",

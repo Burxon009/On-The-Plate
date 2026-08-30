@@ -8,6 +8,10 @@ server/.env
 .env
 server/test-qr.png
 
+# Runtime-логи (pino) — не должны попадать в git
+logs/
+server/logs/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

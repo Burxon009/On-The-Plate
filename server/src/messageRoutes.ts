@@ -3,6 +3,7 @@ import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.get("/", authMiddleware, async (req: AuthRequest, res) => {
       messages: result.rows,
     });
   } catch (error) {
-    console.error("Ошибка получения сообщений:", error);
+    logger.error({ err: error }, "Ошибка получения сообщений");
 
     res.status(500).json({
       message: "Ошибка получения сообщений ❌",
@@ -77,7 +78,7 @@ router.post("/:id/read", authMiddleware, async (req: AuthRequest, res) => {
       storeMessage: result.rows[0],
     });
   } catch (error) {
-    console.error("Ошибка обновления сообщения:", error);
+    logger.error({ err: error }, "Ошибка обновления сообщения");
 
     res.status(500).json({
       message: "Ошибка обновления сообщения ❌",
@@ -131,7 +132,7 @@ router.post(
         storeMessage: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка отправки сообщения:", error);
+      logger.error({ err: error }, "Ошибка отправки сообщения");
 
       res.status(500).json({
         message: "Ошибка отправки сообщения ❌",

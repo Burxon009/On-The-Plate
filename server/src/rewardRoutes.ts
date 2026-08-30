@@ -3,6 +3,7 @@ import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -57,7 +58,7 @@ router.get("/", authMiddleware, async (req: AuthRequest, res) => {
       rewards: result.rows,
     });
   } catch (error) {
-    console.error("Ошибка получения rewards:", error);
+    logger.error({ err: error }, "Ошибка получения rewards");
 
     res.status(500).json({
       message: "Ошибка получения rewards ❌",
@@ -114,7 +115,7 @@ router.post(
         reward: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка погашения reward:", error);
+      logger.error({ err: error }, "Ошибка погашения reward");
 
       res.status(500).json({
         message: "Ошибка погашения reward ❌",

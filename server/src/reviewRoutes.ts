@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -41,7 +42,7 @@ router.get("/", authMiddleware, async (req, res) => {
       reviews: result.rows,
     });
   } catch (error) {
-    console.error("Ошибка получения отзывов:", error);
+    logger.error({ err: error }, "Ошибка получения отзывов");
 
     res.status(500).json({
       message: "Ошибка получения отзывов ❌",
@@ -103,7 +104,7 @@ router.post("/", authMiddleware, async (req: AuthRequest, res) => {
       review: result.rows[0],
     });
   } catch (error) {
-    console.error("Ошибка сохранения отзыва:", error);
+    logger.error({ err: error }, "Ошибка сохранения отзыва");
 
     res.status(500).json({
       message: "Ошибка сохранения отзыва ❌",

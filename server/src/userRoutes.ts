@@ -4,6 +4,7 @@ import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -43,7 +44,7 @@ router.get(
 
       res.json(result.rows);
     } catch (error) {
-      console.error("Ошибка получения пользователей:", error);
+      logger.error({ err: error }, "Ошибка получения пользователей");
 
       res.status(500).json({
         message: "Ошибка получения пользователей ❌",
@@ -88,7 +89,7 @@ router.post(
 
       res.status(201).json(result.rows[0]);
     } catch (error) {
-      console.error("Ошибка создания пользователя:", error);
+      logger.error({ err: error }, "Ошибка создания пользователя");
 
       res.status(500).json({
         message: "Ошибка создания пользователя ",
@@ -127,7 +128,7 @@ router.get("/me", authMiddleware, async (req: AuthRequest, res) => {
 
     res.json(result.rows[0]);
   } catch (error) {
-    console.error("Ошибка получения профиля:", error);
+    logger.error({ err: error }, "Ошибка получения профиля");
 
     res.status(500).json({
       message: "Ошибка получения профиля ",
@@ -160,7 +161,7 @@ router.get("/me/qr", authMiddleware, async (req: AuthRequest, res) => {
       qrToken: result.rows[0].qr_token,
     });
   } catch (error) {
-    console.error("Ошибка получения QR-токена:", error);
+    logger.error({ err: error }, "Ошибка получения QR-токена");
 
     res.status(500).json({
       message: "Ошибка получения QR-токена ",
@@ -206,7 +207,7 @@ router.get(
 
       res.send(qrBuffer);
     } catch (error) {
-      console.error("Ошибка генерации QR-кода:", error);
+      logger.error({ err: error }, "Ошибка генерации QR-кода");
 
       res.status(500).json({
         message: "Ошибка генерации QR-кода ",
@@ -267,7 +268,7 @@ router.post(
         user: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка поиска клиента по QR:", error);
+      logger.error({ err: error }, "Ошибка поиска клиента по QR");
 
       res.status(500).json({
         message: "Ошибка поиска клиента по QR ❌",

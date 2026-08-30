@@ -3,6 +3,7 @@ import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.get("/", authMiddleware, async (_req: AuthRequest, res) => {
       stores: result.rows,
     });
   } catch (error) {
-    console.error("Ошибка получения магазинов:", error);
+    logger.error({ err: error }, "Ошибка получения магазинов");
 
     res.status(500).json({
       message: "Ошибка получения магазинов ❌",
@@ -117,7 +118,7 @@ router.post(
     } catch (error) {
       await client.query("ROLLBACK");
 
-      console.error("Ошибка создания магазина:", error);
+      logger.error({ err: error }, "Ошибка создания магазина");
 
       res.status(500).json({
         message: "Ошибка создания магазина ❌",
@@ -191,7 +192,7 @@ router.post(
         userStore: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка добавления магазина:", error);
+      logger.error({ err: error }, "Ошибка добавления магазина");
 
       res.status(500).json({
         message: "Ошибка добавления магазина ❌",
@@ -235,7 +236,7 @@ router.get(
         stores: result.rows,
       });
     } catch (error) {
-      console.error("Ошибка получения магазинов клиента:", error);
+      logger.error({ err: error }, "Ошибка получения магазинов клиента");
 
       res.status(500).json({
         message: "Ошибка получения магазинов ❌",
@@ -278,7 +279,7 @@ router.get(
         stores: result.rows,
       });
     } catch (error) {
-      console.error("Ошибка получения магазинов admin:", error);
+      logger.error({ err: error }, "Ошибка получения магазинов admin");
 
       res.status(500).json({
         message: "Ошибка получения магазинов ❌",

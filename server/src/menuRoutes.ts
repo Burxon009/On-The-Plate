@@ -3,6 +3,7 @@ import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -49,7 +50,7 @@ router.get("/", authMiddleware, async (req, res) => {
       products: productsResult.rows,
     });
   } catch (error) {
-    console.error("Ошибка получения меню:", error);
+    logger.error({ err: error }, "Ошибка получения меню");
 
     res.status(500).json({
       message: "Ошибка получения меню ❌",
@@ -93,7 +94,7 @@ router.post(
         category: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка создания категории:", error);
+      logger.error({ err: error }, "Ошибка создания категории");
 
       res.status(500).json({
         message: "Ошибка создания категории ❌",
@@ -167,7 +168,7 @@ router.post(
         product: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка создания товара:", error);
+      logger.error({ err: error }, "Ошибка создания товара");
 
       res.status(500).json({
         message: "Ошибка создания товара ❌",

@@ -14,6 +14,20 @@ import homeBlockRoutes from "./homeBlockRoutes";
 import messageRoutes from "./messageRoutes";
 import { pool } from "./db";
 import { cleanupVerificationCodes } from "./verificationService";
+import { logger } from "./logger";
+
+// Логируем и завершаем процесс при неизвестной ошибке — не пытаемся
+// "продолжить работу" в неопределённом состоянии, но и не падаем молча.
+process.on("uncaughtException", (error) => {
+  logger.error({ err: error }, "uncaughtException — процесс завершается");
+  // Небольшая задержка, чтобы транспорт логгера успел дописать файл.
+  setTimeout(() => process.exit(1), 200).unref();
+});
+process.on("unhandledRejection", (reason) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error({ err }, "unhandledRejection — процесс завершается");
+  setTimeout(() => process.exit(1), 200).unref();
+});
 
 const app = express();
 if (process.env.TRUST_PROXY === "true") {
@@ -26,6 +40,27 @@ const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:4200")
 
 app.disable("x-powered-by");
 app.use(helmet());
+
+// Логирование каждого HTTP-запроса — идёт сразу после helmet, ДО rate-limit
+// и CORS, чтобы в лог попадали и запросы, отсечённые 429/403.
+app.use((req, res, next) => {
+  const startedAt = process.hrtime.bigint();
+  res.on("finish", () => {
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
+    const payload = {
+      method: req.method,
+      path: req.originalUrl,
+      status: res.statusCode,
+      durationMs: Math.round(durationMs * 100) / 100,
+    };
+    const line = `${req.method} ${req.originalUrl} ${res.statusCode} ${payload.durationMs}ms`;
+    if (res.statusCode >= 500) logger.error(payload, line);
+    else if (res.statusCode >= 400) logger.warn(payload, line);
+    else logger.info(payload, line);
+  });
+  next();
+});
+
 app.use(express.json({ limit: "100kb" }));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -81,20 +116,20 @@ app.use("/home-blocks", homeBlockRoutes);
 app.use("/messages", messageRoutes);
 
 const port = Number(process.env.PORT ?? 3000);
-const server = app.listen(port, () => console.log(`API listening on port ${port}`));
+const server = app.listen(port, () => logger.info(`API listening on port ${port}`));
 
 void cleanupVerificationCodes().catch((error) =>
-  console.error("OTP cleanup failed:", error instanceof Error ? error.message : error)
+  logger.error({ err: error }, "OTP cleanup failed")
 );
 const otpCleanupTimer = setInterval(() => {
   void cleanupVerificationCodes().catch((error) =>
-    console.error("OTP cleanup failed:", error instanceof Error ? error.message : error)
+    logger.error({ err: error }, "OTP cleanup failed")
   );
 }, 60 * 60 * 1000);
 otpCleanupTimer.unref();
 
 function shutdown(signal: string) {
-  console.log(`${signal} received; shutting down`);
+  logger.info(`${signal} received; shutting down`);
   server.close(() => void pool.end().finally(() => process.exit(0)));
   setTimeout(() => process.exit(1), 10_000).unref();
 }

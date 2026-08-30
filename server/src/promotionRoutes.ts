@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
 import { addPromotionProgress } from "./promotionService";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -51,7 +52,7 @@ router.get("/", authMiddleware, async (req: AuthRequest, res) => {
       promotions: result.rows,
     });
   } catch (error) {
-    console.error("Ошибка получения акций:", error);
+    logger.error({ err: error }, "Ошибка получения акций");
 
     res.status(500).json({
       message: "Ошибка получения акций ❌",
@@ -131,7 +132,7 @@ router.post(
         promotion: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка создания акции:", error);
+      logger.error({ err: error }, "Ошибка создания акции");
 
       res.status(500).json({
         message: "Ошибка создания акции ❌",
@@ -190,7 +191,7 @@ router.patch(
         promotion: result.rows[0],
       });
     } catch (error) {
-      console.error("Ошибка обновления акции:", error);
+      logger.error({ err: error }, "Ошибка обновления акции");
 
       res.status(500).json({
         message: "Ошибка обновления акции ❌",
@@ -247,7 +248,7 @@ router.post(
         ...result,
       });
     } catch (error) {
-      console.error("Ошибка обновления прогресса акции:", error);
+      logger.error({ err: error }, "Ошибка обновления прогресса акции");
 
       const message =
         error instanceof Error ? error.message : "Ошибка обновления прогресса";

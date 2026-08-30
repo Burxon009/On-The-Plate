@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { logger } from "./logger";
 
 export interface EmailService {
   sendEmail(email: string, subject: string, message: string): Promise<void>;
@@ -31,7 +32,7 @@ class SmtpEmailService implements EmailService {
         text: message,
       });
     } catch (error) {
-      console.error("Email delivery failed:", error);
+      logger.error({ err: error }, "Email delivery failed");
       throw new Error("Не удалось отправить письмо с кодом. Попробуйте позже.");
     }
   }
@@ -39,7 +40,7 @@ class SmtpEmailService implements EmailService {
 
 class DevStubEmailService implements EmailService {
   async sendEmail(email: string, subject: string, message: string): Promise<void> {
-    console.log(`📧 [DEV EMAIL] → ${email} | ${subject}: ${message}`);
+    logger.info({ to: email, subject, message }, "[DEV EMAIL] код не отправлен реально (SMTP не настроен)");
   }
 }
 

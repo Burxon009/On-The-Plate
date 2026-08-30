@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
 import { createPurchase } from "./purchaseService";
+import { logger } from "./logger";
 
 const router = Router();
 
@@ -93,7 +94,7 @@ router.post(
         ...result,
       });
     } catch (error) {
-      console.error("Ошибка создания покупки:", error);
+      logger.error({ err: error }, "Ошибка создания покупки");
 
       const message =
         error instanceof Error
