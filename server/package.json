@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx src/server.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "migrate": "tsx src/migrate.ts",
+    "backup": "tsx scripts/backup.ts",
     "test": "vitest run"
   },
   "keywords": [],

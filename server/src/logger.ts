@@ -1,6 +1,7 @@
 import { mkdirSync } from "fs";
 import path from "path";
 import pino from "pino";
+import pretty from "pino-pretty";
 
 /**
  * Единый логгер на весь backend.
@@ -13,6 +14,11 @@ import pino from "pino";
  * Файлы: logs/app-YYYY-MM-DD.log (info и выше) и logs/error-YYYY-MM-DD.log
  * (только error и выше). Новый файл на каждый день запуска — простая
  * ежедневная ротация без внешних зависимостей.
+ *
+ * Все потоки СИНХРОННЫЕ (pino.multistream, без worker-транспорта): строка
+ * гарантированно записана к моменту возврата из logger.*(), в т.ч. в
+ * короткоживущих CLI-скриптах (backup/migrate) и в обработчиках
+ * uncaughtException прямо перед process.exit().
  */
 
 const nodeEnv = process.env.NODE_ENV;
@@ -29,34 +35,41 @@ function buildLogger(): pino.Logger {
 
   const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-  const targets: pino.TransportTargetOptions[] = [
+  const streams: pino.StreamEntry[] = [
     {
-      target: "pino/file",
       level: "info",
-      options: { destination: path.join(logDir, `app-${day}.log`), mkdir: true },
+      stream: pino.destination({
+        dest: path.join(logDir, `app-${day}.log`),
+        sync: true,
+        mkdir: true,
+      }),
     },
     {
-      target: "pino/file",
       level: "error",
-      options: { destination: path.join(logDir, `error-${day}.log`), mkdir: true },
+      stream: pino.destination({
+        dest: path.join(logDir, `error-${day}.log`),
+        sync: true,
+        mkdir: true,
+      }),
     },
   ];
 
   if (!isProduction) {
-    targets.push({
-      target: "pino-pretty",
+    streams.push({
       level: "info",
-      options: {
+      stream: pretty({
         colorize: true,
         translateTime: "SYS:yyyy-mm-dd HH:MM:ss.l",
         ignore: "pid,hostname",
-      },
+        sync: true,
+        destination: 1, // stdout
+      }),
     });
   }
 
   return pino(
     { level: process.env.LOG_LEVEL ?? "info" },
-    pino.transport({ targets })
+    pino.multistream(streams)
   );
 }
 

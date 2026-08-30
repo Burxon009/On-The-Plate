@@ -12,6 +12,9 @@ server/test-qr.png
 logs/
 server/logs/
 
+# Дампы БД — могут содержать реальные данные клиентов, не в git
+server/backups/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

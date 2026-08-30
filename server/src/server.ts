@@ -18,15 +18,15 @@ import { logger } from "./logger";
 
 // Логируем и завершаем процесс при неизвестной ошибке — не пытаемся
 // "продолжить работу" в неопределённом состоянии, но и не падаем молча.
+// Логгер синхронный, поэтому строка уже на диске к моменту process.exit().
 process.on("uncaughtException", (error) => {
   logger.error({ err: error }, "uncaughtException — процесс завершается");
-  // Небольшая задержка, чтобы транспорт логгера успел дописать файл.
-  setTimeout(() => process.exit(1), 200).unref();
+  process.exit(1);
 });
 process.on("unhandledRejection", (reason) => {
   const err = reason instanceof Error ? reason : new Error(String(reason));
   logger.error({ err }, "unhandledRejection — процесс завершается");
-  setTimeout(() => process.exit(1), 200).unref();
+  process.exit(1);
 });
 
 const app = express();

@@ -1,0 +1,10 @@
+{
+  "//": "Сборка (npm run build): компилируем ТОЛЬКО src/ в dist/ плоско. scripts/ не собираются — запускаются через tsx (как и migrate). Проверка типов всего проекта, включая scripts/, — базовый tsconfig.json (npx tsc --noEmit).",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": ["src"]
+}
