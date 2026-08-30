@@ -219,6 +219,7 @@ router.get(
           s.description,
           s.logo_url,
           s.primary_color,
+          s.cashback_percent,
           s.is_active,
           us.created_at AS added_at
         FROM user_stores us

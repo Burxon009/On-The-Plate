@@ -25,6 +25,13 @@ router.post(
   async (req: AuthRequest, res) => {
     try {
       const { qrToken, storeId, amount, bonusesUsed } = req.body;
+      const idempotencyKey = req.header("Idempotency-Key");
+
+      if (!idempotencyKey || !/^[A-Za-z0-9_-]{16,128}$/.test(idempotencyKey)) {
+        return res.status(400).json({
+          message: "A valid Idempotency-Key header is required",
+        });
+      }
 
       if (!qrToken || typeof qrToken !== "string") {
         return res.status(400).json({
@@ -74,7 +81,8 @@ router.post(
         userId,
         storeId,
         amount,
-        bonusesUsedAmount
+        bonusesUsedAmount,
+        idempotencyKey
       );
 
       return res.status(201).json({
@@ -91,6 +99,25 @@ router.post(
         error instanceof Error
           ? error.message
           : "Ошибка создания покупки";
+
+      // A retry after a successful commit must return the original purchase,
+      // not create a second financial operation.
+      if ((error as { code?: string }).code === "23505") {
+        const idempotencyKey = req.header("Idempotency-Key");
+        const existing = await pool.query(
+          `SELECT id, user_id, store_id, amount, bonuses_used, cashback_percent, cashback_amount, created_at
+           FROM purchases WHERE idempotency_key = $1`,
+          [idempotencyKey]
+        );
+
+        if (existing.rows.length > 0) {
+          return res.status(200).json({
+            message: "Purchase already processed",
+            purchase: existing.rows[0],
+            idempotentReplay: true,
+          });
+        }
+      }
 
       const knownErrors = [
         "Пользователь не подключён к этому магазину",

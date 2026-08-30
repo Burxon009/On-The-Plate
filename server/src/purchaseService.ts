@@ -45,7 +45,8 @@ export async function createPurchase(
   userId: number,
   storeId: number,
   amount: number,
-  bonusesUsed: number = 0
+  bonusesUsed: number = 0,
+  idempotencyKey?: string
 ): Promise<PurchaseResult> {
   if (!Number.isInteger(userId) || userId <= 0) {
     throw new Error("Некорректный ID пользователя");
@@ -184,9 +185,10 @@ export async function createPurchase(
         amount,
         bonuses_used,
         cashback_percent,
-        cashback_amount
+        cashback_amount,
+        idempotency_key
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING
         id,
         user_id,
@@ -204,6 +206,7 @@ export async function createPurchase(
         bonusesUsedAmount.toString(),
         cashbackPercent,
         cashbackAmount.toString(),
+        idempotencyKey ?? null,
       ]
     );
 

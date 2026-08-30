@@ -31,7 +31,6 @@ router.get(
           u.email,
           u.name,
           u.role,
-          u.qr_token,
           u.created_at,
           u.updated_at
         FROM users u

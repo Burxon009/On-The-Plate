@@ -35,6 +35,14 @@ function generateCode(): string {
 
 export class VerificationError extends Error {}
 
+export async function cleanupVerificationCodes(): Promise<void> {
+  await pool.query(`
+    DELETE FROM verification_codes
+    WHERE expires_at < NOW() - INTERVAL '24 hours'
+       OR (consumed_at IS NOT NULL AND consumed_at < NOW() - INTERVAL '24 hours')
+  `);
+}
+
 /**
  * Запросить код подтверждения на email.
  *
@@ -42,9 +50,7 @@ export class VerificationError extends Error {}
  * email-провайдера). В проде код никогда не возвращается наружу —
  * он уходит через emailService.sendEmail.
  */
-export async function requestVerificationCode(
-  email: string
-): Promise<{ devCode?: string }> {
+export async function requestVerificationCode(email: string): Promise<void> {
   if (!isValidEmail(email)) {
     throw new VerificationError("Некорректный email");
   }
@@ -92,9 +98,7 @@ export async function requestVerificationCode(
     `Ваш код подтверждения: ${code}. Никому не сообщайте его. Код действителен 5 минут.`
   );
 
-  const isDev = process.env.NODE_ENV !== "production";
-
-  return isDev ? { devCode: code } : {};
+  return;
 }
 
 /**

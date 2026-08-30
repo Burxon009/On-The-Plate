@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { HttpErrorResponse, HttpInterceptorFn, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from './services/auth.service';
 
 const authInterceptor: HttpInterceptorFn = (request, next) => {
@@ -16,8 +16,18 @@ const authInterceptor: HttpInterceptorFn = (request, next) => {
 
   return next(authorizedRequest).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && auth.isAuthenticated()) {
-        auth.logout();
+      const isRefreshRequest = request.url.includes('/auth/refresh') || request.url.includes('/auth/logout');
+      if (error.status === 401 && auth.isAuthenticated() && !isRefreshRequest) {
+        return auth.restoreSession(true).pipe(
+          switchMap((restored) => {
+            if (!restored) {
+              auth.logout();
+              return throwError(() => error);
+            }
+            const refreshedToken = auth.getToken();
+            return next(request.clone({ setHeaders: { Authorization: `Bearer ${refreshedToken}` } }));
+          }),
+        );
       }
       return throwError(() => error);
     }),

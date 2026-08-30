@@ -1,4 +1,6 @@
 import express from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import userRoutes from "./userRoutes";
 import authRoutes from "./authRoutes";
 import walletRoutes from "./walletRoutes";
@@ -11,20 +13,61 @@ import menuRoutes from "./menuRoutes";
 import homeBlockRoutes from "./homeBlockRoutes";
 import messageRoutes from "./messageRoutes";
 import { pool } from "./db";
+import { cleanupVerificationCodes } from "./verificationService";
 
 const app = express();
-app.use(express.json());
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
+const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:4200")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.disable("x-powered-by");
+app.use(helmet());
+app.use(express.json({ limit: "100kb" }));
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: Number(process.env.API_RATE_LIMIT ?? 300),
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ message: "Слишком много запросов. Попробуйте позже." });
+  },
+}));
+app.use("/auth", rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: Number(process.env.AUTH_RATE_LIMIT ?? 10),
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ message: "Слишком много попыток входа. Попробуйте через несколько минут." });
+  },
+}));
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:4200');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
+  const origin = req.header("Origin");
+  if (origin && !allowedOrigins.includes(origin)) {
+    return res.status(403).json({ message: "Origin is not allowed" });
   }
-
+  if (origin) res.header("Access-Control-Allow-Origin", origin);
+  res.header("Vary", "Origin");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Idempotency-Key");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
+
+app.get("/health/live", (_req, res) => res.status(200).json({ status: "ok" }));
+app.get("/health/ready", async (_req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.status(200).json({ status: "ok" });
+  } catch {
+    res.status(503).json({ status: "unavailable" });
+  }
+});
+
 app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/wallet", walletRoutes);
@@ -37,26 +80,24 @@ app.use("/menu", menuRoutes);
 app.use("/home-blocks", homeBlockRoutes);
 app.use("/messages", messageRoutes);
 
-const PORT = 3000;
+const port = Number(process.env.PORT ?? 3000);
+const server = app.listen(port, () => console.log(`API listening on port ${port}`));
 
-app.get("/", async (_req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW()");
+void cleanupVerificationCodes().catch((error) =>
+  console.error("OTP cleanup failed:", error instanceof Error ? error.message : error)
+);
+const otpCleanupTimer = setInterval(() => {
+  void cleanupVerificationCodes().catch((error) =>
+    console.error("OTP cleanup failed:", error instanceof Error ? error.message : error)
+  );
+}, 60 * 60 * 1000);
+otpCleanupTimer.unref();
 
-    res.json({
-      message: "U CAFE Loyalty API работает! ☕",
-      database: "PostgreSQL подключён ✅",
-      time: result.rows[0].now,
-    });
-  } catch (error) {
-    console.error("Ошибка PostgreSQL:", error);
+function shutdown(signal: string) {
+  console.log(`${signal} received; shutting down`);
+  server.close(() => void pool.end().finally(() => process.exit(0)));
+  setTimeout(() => process.exit(1), 10_000).unref();
+}
 
-    res.status(500).json({
-      message: "Ошибка подключения к PostgreSQL ❌",
-    });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`U CAFE Loyalty API запущен: http://localhost:${PORT}`);
-});
+process.once("SIGTERM", () => shutdown("SIGTERM"));
+process.once("SIGINT", () => shutdown("SIGINT"));

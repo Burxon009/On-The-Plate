@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { API_URL } from '../../api.config';
 import { AuthService } from '../../services/auth.service';
 
 interface Store {
@@ -146,7 +147,7 @@ export class Dashboard implements OnInit, OnDestroy {
   loadingMessages = signal(false);
   messagesError = signal('');
 
-  private readonly apiUrl = 'http://localhost:3000';
+  private readonly apiUrl = API_URL;
 
   constructor(
     private readonly http: HttpClient,

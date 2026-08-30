@@ -30,7 +30,10 @@ export function authMiddleware(
   const token = authHeader.slice(7);
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      issuer: "ucafe-loyalty",
+      audience: "ucafe-api",
+    });
 
     if (typeof decoded === "string") {
       return res.status(401).json({
@@ -40,7 +43,8 @@ export function authMiddleware(
 
     if (
       typeof decoded.userId !== "number" ||
-      typeof decoded.role !== "string"
+      typeof decoded.role !== "string" ||
+      decoded.typ !== "access"
     ) {
       return res.status(401).json({
         message: "Некорректные данные токена",

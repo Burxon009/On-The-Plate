@@ -26,26 +26,16 @@ export class App {
   codeRequested = signal(false);
   loading = signal(false);
   error = signal('');
-  devCode = signal<string | null>(null);
 
   constructor(
     private readonly auth: AuthService,
     private readonly router: Router,
   ) {
-    if (this.isLoggedIn()) {
-      this.auth.loadCurrentUser().pipe(
-        timeout(8000),
-      ).subscribe({
-        next: () => {
-          this.isLoggedIn.set(true);
-          void this.router.navigate(['/dashboard']);
-        },
-        error: () => {
-          this.auth.logout();
-          this.isLoggedIn.set(false);
-        },
-      });
-    }
+    this.auth.restoreSession().pipe(timeout(8000)).subscribe({
+      next: (restored) => {
+        if (restored) void this.router.navigate(['/dashboard']);
+      },
+    });
   }
 
   login(): void {
@@ -62,7 +52,6 @@ export class App {
 
     this.loading.set(true);
     this.error.set('');
-    this.devCode.set(null);
 
     this.auth.requestCode(normalizedEmail).pipe(
       timeout(8000),
@@ -73,8 +62,6 @@ export class App {
       next: (response) => {
         this.verificationEmail = normalizedEmail;
         this.codeRequested.set(true);
-        // devCode приходит только в DEV-режиме — в проде его не будет.
-        this.devCode.set(response.devCode ?? null);
       },
       error: (error) => {
         this.error.set(
@@ -137,7 +124,6 @@ export class App {
     this.codeRequested.set(false);
     this.verificationEmail = '';
     this.code.set('');
-    this.devCode.set(null);
     this.error.set('');
   }
 

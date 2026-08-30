@@ -1,5 +1,5 @@
 @if (!isLoggedIn()) {
-<div class="page">
+<div class="page" >
   <main class="card">
 
     <div class="logo">U</div>
@@ -37,13 +37,6 @@
       </form>
       } @else {
       <form (ngSubmit)="verifyCode()">
-
-        @if (devCode()) {
-          <p class="dev-code-hint">
-            Тестовый режим — реальный email-провайдер ещё не подключён.<br />
-            Ваш код: <strong>{{ devCode() }}</strong>
-          </p>
-        }
 
         <input
           type="text"
