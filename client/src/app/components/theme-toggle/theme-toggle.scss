@@ -1,0 +1,105 @@
+:host {
+  display: inline-flex;
+}
+
+.toggle {
+  /* компактный размер под мобильный интерфейс (референс был 200x100) */
+  --track-w: 64px;
+  --track-h: 32px;
+  --circle: 26px;
+  --pad: 3px;
+
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.track {
+  position: relative;
+  display: block;
+  width: var(--track-w);
+  height: var(--track-h);
+  border-radius: 999px;
+  background: #e6e6ea;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.14),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: background-color 0.4s ease;
+}
+
+.circle {
+  position: absolute;
+  top: var(--pad);
+  left: var(--pad);
+  display: grid;
+  place-items: center;
+  width: var(--circle);
+  height: var(--circle);
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  transition:
+    transform 0.4s ease,
+    background-color 0.4s ease;
+}
+
+.icon {
+  /* обе иконки в одной grid-ячейке — наложены друг на друга по центру */
+  grid-area: 1 / 1;
+  width: 15px;
+  height: 15px;
+  transition:
+    opacity 0.4s ease,
+    margin-top 0.4s ease;
+}
+
+/* Светлое состояние: солнце по центру и видно, луна ушла вниз */
+.sun {
+  color: #fbbf24;
+  opacity: 1;
+  margin-top: 0;
+}
+
+.moon {
+  color: #f5f5f7;
+  opacity: 0;
+  margin-top: 20px;
+}
+
+/* Тёмное состояние */
+.toggle.dark .track {
+  background: var(--bg-surface);
+}
+
+.toggle.dark .circle {
+  /* сдвиг к правому краю: ширина − кружок − оба отступа */
+  transform: translateX(calc(var(--track-w) - var(--circle) - var(--pad) * 2));
+  background: #1f1f2b;
+}
+
+.toggle.dark .sun {
+  opacity: 0;
+  margin-top: -20px;
+}
+
+.toggle.dark .moon {
+  opacity: 1;
+  margin-top: 0;
+}
+
+.toggle:focus-visible .track {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track,
+  .circle,
+  .icon {
+    transition-duration: 0.01ms;
+  }
+}

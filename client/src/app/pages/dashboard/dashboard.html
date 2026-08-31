@@ -4,9 +4,12 @@
       <div class="store-label">ПРОГРАММА ЛОЯЛЬНОСТИ</div>
       <h1>{{ userLabel() }}</h1>
     </div>
-    <button class="icon-button" type="button" (click)="logout()" title="Выйти">
-      Выйти
-    </button>
+    <div class="topbar-actions">
+      <app-theme-toggle />
+      <button class="icon-button" type="button" (click)="logout()" title="Выйти">
+        Выйти
+      </button>
+    </div>
   </header>
 
   <section class="section store-controls">

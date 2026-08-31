@@ -1,17 +1,23 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterOutlet } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 import { AuthService } from './services/auth.service';
+import { ThemeService } from './services/theme.service';
+import { ThemeToggle } from './components/theme-toggle/theme-toggle';
 
 @Component({
-  imports: [RouterOutlet, FormsModule],
+  imports: [RouterOutlet, FormsModule, ThemeToggle],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
 export class App {
+  // Создаём сервис темы сразу при старте приложения, чтобы data-theme
+  // на <html> проставился как можно раньше.
+  private readonly theme = inject(ThemeService);
+
   protected get isLoggedIn() {
     return this.auth.isLoggedIn;
   }

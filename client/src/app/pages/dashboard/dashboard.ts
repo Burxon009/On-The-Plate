@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../../api.config';
 import { AuthService } from '../../services/auth.service';
+import { ThemeToggle } from '../../components/theme-toggle/theme-toggle';
 
 interface Store {
   id: number;
@@ -86,7 +87,7 @@ interface StoreMessage {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [DecimalPipe, DatePipe, FormsModule],
+  imports: [DecimalPipe, DatePipe, FormsModule, ThemeToggle],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })

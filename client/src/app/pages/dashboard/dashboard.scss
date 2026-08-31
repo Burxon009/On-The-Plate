@@ -24,6 +24,12 @@
   margin-bottom: 22px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .store-label {
   font-size: 10px;
   font-weight: 700;

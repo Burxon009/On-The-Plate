@@ -1,1 +1,40 @@
 /* You can add global styles to this file, and also import other style files */
+
+/*
+ * Токены темы. Светлая — по умолчанию (:root), значения взяты из
+ * существующих цветов app.scss / dashboard.scss. Тёмная — переопределяет
+ * их при [data-theme="dark"] (атрибут ставит ThemeService на <html>).
+ *
+ * На этом шаге переменные пока применяются только к <body> и переключателю;
+ * остальные захардкоженные цвета в компонентах переводятся отдельным шагом.
+ */
+:root {
+  --bg-page: #f5f6f8;
+  --bg-surface: #ffffff;
+  --text-primary: #171717;
+  --text-secondary: #888888;
+  --border: #dddddd;
+  --accent: #171717;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg-page: #0a0a0f;
+  --bg-surface: #16161f;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a0a0ab;
+  --border: #2a2a35;
+  --accent: #8b5cf6;
+
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease;
+}
