@@ -9,7 +9,16 @@
 >
   <span class="track">
     <span class="circle">
-      <svg class="icon sun" viewBox="0 0 24 24" aria-hidden="true">
+      <!--
+        Обе иконки центрированы: viewBox обрезан ровно по фактическим
+        границам содержимого, поэтому и солнце, и луна занимают всю
+        отрисованную область 15x15 с центром в её середине.
+        Солнце: содержимое [0.5..23.5] (круг r5 в (12,12) + лучи с
+        закруглёнными концами) → viewBox "0.5 0.5 23 23".
+        Луна: содержимое [3..21] (внешняя дуга — окружность в (12,12) r9)
+        → viewBox "3 3 18 18".
+      -->
+      <svg class="icon sun" viewBox="0.5 0.5 23 23" aria-hidden="true">
         <circle cx="12" cy="12" r="5" fill="currentColor" />
         <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="12" y1="1.5" x2="12" y2="4" />
@@ -22,7 +31,7 @@
           <line x1="18.4" y1="5.6" x2="20.1" y2="3.9" />
         </g>
       </svg>
-      <svg class="icon moon" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="icon moon" viewBox="3 3 18 18" aria-hidden="true">
         <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="currentColor" />
       </svg>
     </span>

@@ -1,0 +1,87 @@
+<div class="ps-overlay" role="presentation" (click)="close()"></div>
+
+<section class="ps-panel" role="dialog" aria-modal="true" aria-labelledby="ps-title">
+  <header class="ps-header">
+    <h2 id="ps-title">{{ lang.t('profileTitle') }}</h2>
+    <button class="ps-close" type="button" [attr.aria-label]="lang.t('profileClose')" (click)="close()">×</button>
+  </header>
+
+  <!-- Фото -->
+  <div class="ps-avatar-row">
+    <div class="ps-avatar">
+      @if (avatar()) {
+        <img [src]="avatar()" alt="" />
+      } @else {
+        <span>{{ (name() || auth.user()?.email || '?').charAt(0).toUpperCase() }}</span>
+      }
+    </div>
+    <label class="ps-file">
+      {{ uploadingAvatar() ? lang.t('profileSaving') : lang.t('profilePhoto') }}
+      <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+    </label>
+  </div>
+
+  <!-- Имя -->
+  <label class="ps-field">
+    <span>{{ lang.t('profileName') }}</span>
+    <input type="text" [ngModel]="name()" (ngModelChange)="name.set($event)" autocomplete="name" />
+  </label>
+
+  <!-- Телефон -->
+  <label class="ps-field">
+    <span>{{ lang.t('profilePhone') }}</span>
+    <input type="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" autocomplete="tel" placeholder="+998..." />
+  </label>
+
+  <button class="ps-primary" type="button" [disabled]="savingProfile()" (click)="saveProfile()">
+    {{ savingProfile() ? lang.t('profileSaving') : lang.t('profileSave') }}
+  </button>
+
+  @if (profileMessage()) {
+    <p class="ps-ok">{{ profileMessage() }}</p>
+  }
+
+  <hr class="ps-divider" />
+
+  <!-- Email -->
+  <label class="ps-field">
+    <span>{{ lang.t('profileEmail') }}</span>
+    <input
+      type="email"
+      [ngModel]="newEmail()"
+      (ngModelChange)="newEmail.set($event)"
+      [placeholder]="auth.user()?.email || 'you@example.com'"
+      autocomplete="email"
+    />
+  </label>
+
+  @if (!emailCodeRequested()) {
+    <button class="ps-secondary" type="button" [disabled]="sendingCode()" (click)="requestEmailChange()">
+      {{ sendingCode() ? lang.t('profileSaving') : lang.t('profileSendCode') }}
+    </button>
+  } @else {
+    <label class="ps-field">
+      <span>{{ lang.t('loginCodePrompt') }}</span>
+      <input
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        [ngModel]="emailCode()"
+        (ngModelChange)="emailCode.set($event)"
+        placeholder="123456"
+        autocomplete="one-time-code"
+      />
+    </label>
+    <button class="ps-primary" type="button" [disabled]="confirmingEmail()" (click)="confirmEmailChange()">
+      {{ confirmingEmail() ? lang.t('profileSaving') : lang.t('profileConfirm') }}
+    </button>
+  }
+
+  @if (emailMessage()) {
+    <p class="ps-ok">{{ emailMessage() }}</p>
+  }
+
+  @if (error()) {
+    <p class="ps-error">{{ error() }}</p>
+  }
+</section>

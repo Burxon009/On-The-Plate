@@ -10,6 +10,8 @@ export interface User {
   name: string | null;
   role: string;
   qr_token?: string;
+  phone?: string | null;
+  avatar_base64?: string | null;
 }
 
 interface SessionResponse {

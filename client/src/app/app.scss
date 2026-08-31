@@ -3,106 +3,148 @@
   min-height: 100vh;
 }
 
-.app {
+/* Экран входа — обычный фон темы, фото сюда не ставим. */
+.page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f3;
   padding: 24px;
   box-sizing: border-box;
+  background: var(--bg-page);
 }
 
+/* Фоновое фото — ВНУТРИ карточки. Поверх фото затемняющий слой
+   (.card::before), само фото не трогаем. Контент карточки поднят
+   над слоем через `.card > *` { z-index: 1 }. */
 .card {
+  position: relative;
+  z-index: 1;
+  overflow: hidden; /* обрезаем фото по скруглению карточки */
   width: 100%;
   max-width: 420px;
   padding: 48px 40px;
-  background: #ffffff;
+  background-color: var(--bg-surface); /* фолбэк, пока фото не загрузилось */
+  background-image: url('/assets/images/login-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #f5f5f7;
   border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 30px var(--shadow-color);
   box-sizing: border-box;
+  text-align: center; /* единое выравнивание всего текста карточки по центру */
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 20, 0.55);
+  z-index: 0;
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+:host-context([data-theme='dark']) .card {
+  border: 1px solid var(--border);
 }
 
 .card-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.logo {
-  width: 52px;
-  height: 52px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  border-radius: 16px;
-  background: #111111;
-  color: #ffffff;
-  font-size: 26px;
-  font-weight: 700;
+  justify-content: space-between; /* язык слева, переключатель темы справа */
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
+/* Текст поверх фото/затемнения — всегда светлый, в обеих темах */
 h1 {
   margin: 0;
-  font-size: 36px;
+  font-size: 32px;
   line-height: 1.1;
-  color: #111111;
+  color: #ffffff;
 }
 
 .subtitle {
   margin: 6px 0 42px;
-  color: #888888;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 16px;
 }
 
 h2 {
   margin: 0 0 12px;
   font-size: 26px;
-  color: #111111;
+  color: #ffffff;
 }
 
 .description {
   margin: 0 0 28px;
-  color: #666666;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.5;
+}
+
+/* Единый вертикальный ритм формы: gap на контейнере расставляет ОДИНАКОВЫЙ
+   зазор между всеми полями и кнопками. Раньше зазор держал margin-bottom
+   у каждого input — с овальной формой (999px) 12px визуально «слипались»,
+   поэтому переносим на gap контейнера и слегка увеличиваем. */
+.login form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 input {
   width: 100%;
   height: 52px;
-  padding: 0 16px;
-  margin-bottom: 12px;
+  padding: 0 20px;
   box-sizing: border-box;
-  border: 1px solid #dddddd;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px; /* овальные поля */
   outline: none;
   font-size: 16px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 input:focus {
-  border-color: #111111;
+  border-color: var(--accent);
 }
 
 button {
   width: 100%;
   height: 52px;
   border: 0;
-  border-radius: 12px;
-  background: #111111;
-  color: #ffffff;
+  border-radius: 999px; /* овальные кнопки в тон полям */
+  background: var(--accent);
+  color: var(--accent-text);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
 }
 
 button:hover {
-  background: #292929;
+  background: var(--accent-hover);
+}
+
+/* Стеклянные кнопки — эффект хорошо виден в тёмной теме */
+:host-context([data-theme='dark']) button {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 20px var(--shadow-color);
+  color: var(--text-primary);
 }
 
 .error {
   margin: 16px 0 0;
-  color: #b42318;
+  color: var(--danger);
   font-size: 14px;
   line-height: 1.4;
 }
@@ -111,8 +153,8 @@ button:hover {
   margin: 0 0 16px;
   padding: 12px;
   border-radius: 12px;
-  background: #fff7e6;
-  color: #7a4b00;
+  background: var(--warning-bg);
+  color: var(--warning);
   font-size: 14px;
   line-height: 1.4;
 }
@@ -120,10 +162,20 @@ button:hover {
 .change-phone {
   margin-top: 12px;
   background: transparent;
-  color: #111111;
-  border: 1px solid #dddddd;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
 }
 
 .change-phone:hover {
-  background: #f5f5f3;
+  background: var(--bg-page);
+}
+
+/* Подпись — последний элемент внутри карточки, поверх фото */
+.app-footer {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
 }

@@ -61,7 +61,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: "100kb" }));
+// Аватар профиля приходит base64-строкой в теле и парсится своим
+// json-парсером с большим лимитом прямо в маршруте (userRoutes).
+// Глобальный парсер (100kb) его пропускает нетронутым.
+app.use((req, res, next) => {
+  if (req.path === "/users/me/avatar") return next();
+  return express.json({ limit: "100kb" })(req, res, next);
+});
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: Number(process.env.API_RATE_LIMIT ?? 300),

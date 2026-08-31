@@ -1,0 +1,34 @@
+<button
+  class="hm-trigger"
+  type="button"
+  [class.open]="open()"
+  [attr.aria-expanded]="open()"
+  aria-label="Меню"
+  (click)="toggle()"
+>
+  <span class="hm-bars" aria-hidden="true"></span>
+</button>
+
+@if (open()) {
+  <div class="hm-scrim" role="presentation" (click)="close()"></div>
+
+  <div class="hm-panel" role="menu">
+    <div class="hm-row">
+      <span class="hm-row-label">{{ lang.t('menuTheme') }}</span>
+      <app-theme-toggle />
+    </div>
+
+    <div class="hm-row hm-row--stack">
+      <span class="hm-row-label">{{ lang.t('menuLanguage') }}</span>
+      <app-language-switcher />
+    </div>
+
+    <button class="hm-item" type="button" role="menuitem" (click)="onProfile()">
+      {{ lang.t('menuProfile') }}
+    </button>
+
+    <button class="hm-item hm-item--logout" type="button" role="menuitem" (click)="onLogout()">
+      {{ lang.t('menuLogout') }}
+    </button>
+  </div>
+}

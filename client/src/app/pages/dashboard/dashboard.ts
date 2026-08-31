@@ -1,10 +1,12 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../../api.config';
 import { AuthService } from '../../services/auth.service';
-import { ThemeToggle } from '../../components/theme-toggle/theme-toggle';
+import { LanguageService } from '../../services/language.service';
+import { HamburgerMenu } from '../../components/hamburger-menu/hamburger-menu';
+import { ProfileSettings } from '../../components/profile-settings/profile-settings';
 
 interface Store {
   id: number;
@@ -87,7 +89,7 @@ interface StoreMessage {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [DecimalPipe, DatePipe, FormsModule, ThemeToggle],
+  imports: [DecimalPipe, DatePipe, FormsModule, HamburgerMenu, ProfileSettings],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -103,6 +105,9 @@ export class Dashboard implements OnInit, OnDestroy {
   storeIdInput = signal('');
   qrImageUrl = signal<string | null>(null);
   showQr = signal(false);
+  showProfile = signal(false);
+
+  readonly lang = inject(LanguageService);
   loadingStores = signal(true);
   loadingStoreData = signal(false);
   joiningStore = signal(false);
@@ -157,6 +162,8 @@ export class Dashboard implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadStores();
+    // Полный профиль (с phone/avatar) — для миниатюры в шапке.
+    this.auth.loadCurrentUser().subscribe({ error: () => undefined });
   }
 
   ngOnDestroy(): void {
@@ -261,6 +268,18 @@ export class Dashboard implements OnInit, OnDestroy {
     this.showQr.set(false);
   }
 
+  /**
+   * Одна кнопка «Мой QR» и открывает, и закрывает полноэкранный QR —
+   * её вид (иконка+текст ↔ крестик) переключается по showQr() в шаблоне.
+   */
+  toggleQr(): void {
+    if (this.showQr()) {
+      this.closeQr();
+    } else {
+      this.openQr();
+    }
+  }
+
   logout(): void {
     this.auth.logout();
   }
@@ -268,6 +287,16 @@ export class Dashboard implements OnInit, OnDestroy {
   userLabel(): string {
     const user = this.auth.user();
     return user?.name || user?.email || 'Клиент';
+  }
+
+  /** base64-аватар пользователя или null (тогда показываем букву). */
+  avatarUrl(): string | null {
+    return this.auth.user()?.avatar_base64 ?? null;
+  }
+
+  /** Первая буква имени/email для плейсхолдера-кружка. */
+  userInitial(): string {
+    return this.userLabel().charAt(0).toUpperCase();
   }
 
   transactionSign(transaction: Transaction): string {

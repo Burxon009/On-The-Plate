@@ -1,0 +1,13 @@
+<div class="langs" role="group" aria-label="Язык интерфейса">
+  @for (option of lang.available; track option) {
+    <button
+      type="button"
+      class="lang"
+      [class.active]="lang.current() === option"
+      [attr.aria-pressed]="lang.current() === option"
+      (click)="select(option)"
+    >
+      {{ option | uppercase }}
+    </button>
+  }
+</div>

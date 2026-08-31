@@ -48,26 +48,29 @@
 }
 
 .icon {
-  /* обе иконки в одной grid-ячейке — наложены друг на друга по центру */
+  /* обе иконки в одной grid-ячейке, явно по центру — наложены друг на друга */
   grid-area: 1 / 1;
+  place-self: center;
   width: 15px;
   height: 15px;
+  /* «выезд» через transform: translateY — предсказуемее, чем margin
+     на выровненном по центру grid-элементе */
   transition:
     opacity 0.4s ease,
-    margin-top 0.4s ease;
+    transform 0.4s ease;
 }
 
-/* Светлое состояние: солнце по центру и видно, луна ушла вниз */
+/* Светлое состояние: солнце по центру и видно, луна уехала вниз */
 .sun {
   color: #fbbf24;
   opacity: 1;
-  margin-top: 0;
+  transform: translateY(0);
 }
 
 .moon {
   color: #f5f5f7;
   opacity: 0;
-  margin-top: 20px;
+  transform: translateY(130%);
 }
 
 /* Тёмное состояние */
@@ -78,17 +81,17 @@
 .toggle.dark .circle {
   /* сдвиг к правому краю: ширина − кружок − оба отступа */
   transform: translateX(calc(var(--track-w) - var(--circle) - var(--pad) * 2));
-  background: #1f1f2b;
+  background: var(--bg-surface-elevated);
 }
 
 .toggle.dark .sun {
   opacity: 0;
-  margin-top: -20px;
+  transform: translateY(-130%);
 }
 
 .toggle.dark .moon {
   opacity: 1;
-  margin-top: 0;
+  transform: translateY(0);
 }
 
 .toggle:focus-visible .track {

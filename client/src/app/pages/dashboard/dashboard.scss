@@ -1,8 +1,8 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #f5f6f8;
-  color: #171717;
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 
 * {
@@ -30,11 +30,38 @@
   gap: 10px;
 }
 
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.topbar-user .avatar {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.topbar-user .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .store-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #929292;
+  color: var(--text-secondary);
   margin-bottom: 3px;
 }
 
@@ -48,11 +75,64 @@
 .icon-button {
   height: 44px;
   border: 0;
-  border-radius: 14px;
-  background: #fff;
-  font-size: 20px;
+  border-radius: 999px;
+  padding: 0 18px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
+  box-shadow: 0 6px 20px var(--shadow-color);
+}
+
+
+/* INPUTS — овальные поля в обеих темах */
+
+input {
+  height: 46px;
+  padding: 0 18px;
+  margin-bottom: 12px; /* дефолтный зазор между полями формы */
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  outline: none;
+  font-size: 15px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+input:focus {
+  border-color: var(--accent);
+}
+
+/* Форма «Магазины»: раньше поля были крошечными (без правил → дефолт
+   браузера), поэтому вертикальный зазор был незаметен. Теперь поля —
+   крупные овалы, задаём явный ритм: подпись над полем + отступ под каждой
+   группой + gap между полем и кнопкой. */
+.store-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.store-controls form {
+  display: flex;
+  flex-direction: column;
+}
+
+.store-controls select,
+.store-controls input {
+  width: 100%;
+  height: 46px;
+  margin-bottom: 0; /* зазор задаёт margin-bottom у .store-controls label */
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
 }
 
 
@@ -61,20 +141,20 @@
 .wallet-card {
   padding: 24px;
   border-radius: 27px;
-  background: linear-gradient(135deg, #191919, #303030);
-  color: #fff;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, .15);
+  background: linear-gradient(135deg, var(--wallet-grad-1), var(--wallet-grad-2));
+  color: #ffffff;
+  box-shadow: 0 12px 40px var(--shadow-color);
 }
 
 .wallet-top {
   display: flex;
   justify-content: space-between;
-  color: #bcbcbc;
+  color: rgba(255, 255, 255, 0.65);
   font-size: 13px;
 }
 
 .wallet-store {
-  color: #fff;
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -88,7 +168,7 @@
 .balance small {
   font-size: 16px;
   font-weight: 500;
-  color: #bcbcbc;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .wallet-info {
@@ -100,13 +180,13 @@
 .wallet-info div {
   padding: 13px;
   border-radius: 15px;
-  background: rgba(255, 255, 255, .08);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .wallet-info span {
   display: block;
   font-size: 11px;
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.62);
   margin-bottom: 5px;
 }
 
@@ -136,7 +216,7 @@
 .section-title button {
   border: 0;
   background: none;
-  color: #777;
+  color: var(--text-secondary);
   font-size: 12px;
   cursor: pointer;
 }
@@ -146,7 +226,8 @@
 .history {
   overflow: hidden;
   border-radius: 20px;
-  background: #fff;
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .history-item {
@@ -154,7 +235,7 @@
   align-items: center;
   gap: 11px;
   padding: 15px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .history-item:last-child {
@@ -168,11 +249,11 @@
   display: grid;
   place-items: center;
   border-radius: 13px;
-  background: #f1f1f1;
+  background: var(--bg-surface-elevated);
 }
 
 .history-icon.reward {
-  background: #ededed;
+  background: var(--bg-surface-elevated);
 }
 
 .history-main {
@@ -189,7 +270,7 @@
   display: block;
   margin-top: 3px;
   font-size: 10px;
-  color: #999;
+  color: var(--text-secondary);
 }
 
 .history-value {
@@ -205,39 +286,245 @@
   display: block;
   margin-top: 3px;
   font-size: 10px;
-  color: #999;
+  color: var(--text-secondary);
 }
 
 .history-value.positive strong {
-  color: #16834a;
+  color: var(--success);
 }
 
 /* QR */
 
+/* Плавающая кнопка внизу экрана. Одна и та же кнопка открывает и
+   закрывает QR: в открытом состоянии сжимается в стеклянный круг с «×».
+   z-index 1001 — между стеклянным фоном оверлея (1000) и белой
+   карточкой QR (1002), чтобы кнопка не пряталась под оверлеем. */
 .qr-button {
   position: fixed;
   left: 50%;
   bottom: 18px;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 14px 25px;
+  z-index: 1001;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  height: 52px;
+  padding: 0 25px;
   border: 0;
-  border-radius: 50px;
-  background: #171717;
-  color: #fff;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+  box-shadow: 0 8px 28px var(--shadow-color);
+  transition:
+    width 0.3s ease,
+    padding 0.3s ease,
+    border-radius 0.3s ease,
+    background-color 0.3s ease;
 }
 
-.qr-button span {
+:host-context([data-theme='dark']) .qr-button {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 20px var(--shadow-color);
+  color: var(--text-primary);
+}
+
+/* Оба варианта содержимого лежат в одной grid-ячейке — кросс-фейд
+   без скачка размера при переключении. */
+.qr-button__label,
+.qr-button__x {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.qr-button__label {
+  gap: 9px;
+}
+
+.qr-button__label strong {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.qr-button__glyph {
   font-size: 20px;
 }
 
-.qr-button strong {
+.qr-button__x {
+  font-size: 26px;
+  line-height: 1;
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+}
+
+/* Открытое состояние: круг + стекло (в обеих темах) + виден «×» */
+.qr-button--open {
+  width: 56px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f5f5f7;
+}
+
+/* Стеклянный круг «×» должен выглядеть одинаково в обеих темах —
+   перебиваем более специфичное правило :host-context(...) .qr-button. */
+:host-context([data-theme='dark']) .qr-button--open {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  color: #f5f5f7;
+}
+
+.qr-button--open .qr-button__label {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.qr-button--open .qr-button__x {
+  opacity: 1;
+  transform: rotate(0) scale(2);
+  margin-right: 25px; /* визуально центрируем крестик в круге */
+}
+
+/* ── Полноэкранный QR-экран ───────────────────────────────────────── */
+
+/* Стеклянный тёмный фон — ОДИНАКОВО в обеих темах: это отдельный
+   полноэкранный режим, он не следует палитре страницы. */
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 10, 20, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: qr-overlay-in 0.3s ease;
+}
+
+.qr-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1002;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: min(90vw, 340px);
+  max-height: 90vh;
+  animation: qr-dialog-in 0.3s ease;
+}
+
+.qr-dialog__title {
+  margin: 0;
+  font-size: 24px;
   font-weight: 700;
+  text-align: center;
+  color: #f5f5f7;
+  font-family: sans-serif;
+}
+
+/* Единственный непрозрачный элемент экрана — сплошной белый фон.
+   Никакого backdrop-filter / прозрачности: сканер на кассе должен
+   физически считать код. */
+.qr-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 200px;
+  padding: 24px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 0 60px rgba(45, 90, 61, 0.45); /* мягкое зелёное свечение — акцент экрана */
+}
+
+.qr-card img {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+}
+
+.qr-card__status {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+  color: #333333;
+}
+
+.qr-card__status--error {
+  color: #d92d20;
+}
+
+/* Стеклянная круглая кнопка закрытия в углу экрана */
+.qr-close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1003;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #f5f5f7;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.qr-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@keyframes qr-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes qr-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qr-overlay,
+  .qr-dialog {
+    animation-duration: 0.01ms;
+  }
+
+  .qr-button,
+  .qr-button__label,
+  .qr-button__x {
+    transition-duration: 0.01ms;
+  }
 }
 
 /* MOBILE */
@@ -271,8 +558,8 @@
 .promotion-card {
   padding: 16px;
   border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .promotion-header {
@@ -285,27 +572,27 @@
 .promotion-description {
   margin: 6px 0 10px;
   font-size: 12px;
-  color: #777;
+  color: var(--text-secondary);
 }
 
 .promotion-progress-bar {
   height: 8px;
   border-radius: 6px;
-  background: #eee;
+  background: var(--bg-surface-elevated);
   overflow: hidden;
   margin: 10px 0;
 }
 
 .promotion-progress-fill {
   height: 100%;
-  background: #171717;
+  background: var(--accent);
   border-radius: 6px;
   transition: width .3s ease;
 }
 
 .promotion-reward {
   font-size: 11px;
-  color: #999;
+  color: var(--text-secondary);
 }
 
 /* REVIEWS */
@@ -316,8 +603,8 @@
   gap: 10px;
   padding: 16px;
   border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
   margin-bottom: 14px;
 }
 
@@ -326,28 +613,41 @@
   flex-direction: column;
   gap: 6px;
   font-size: 12px;
-  color: #777;
+  color: var(--text-secondary);
 }
 
 .review-form select,
 .review-form textarea {
-  border: 1px solid #ddd;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 10px;
   font-size: 14px;
   font-family: inherit;
   resize: vertical;
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .review-form button {
   height: 44px;
   border: 0;
-  border-radius: 12px;
-  background: #171717;
-  color: #fff;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+}
+
+:host-context([data-theme='dark']) .review-form button {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 20px var(--shadow-color);
+  color: var(--text-primary);
 }
 
 .reviews-list {
@@ -359,8 +659,8 @@
 .review-card {
   padding: 14px;
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .review-header {
@@ -370,31 +670,31 @@
 }
 
 .review-rating {
-  color: #b8860b;
+  color: var(--warning);
   font-weight: 600;
 }
 
 .review-comment {
   margin: 6px 0 4px;
   font-size: 13px;
-  color: #444;
+  color: var(--text-primary);
 }
 
 .review-date {
   font-size: 10px;
-  color: #999;
+  color: var(--text-secondary);
 }
 
 .success {
   margin: 0;
   font-size: 12px;
-  color: #16834a;
+  color: var(--success);
 }
 
 /* WHITE-LABEL: логотип и акцентный цвет магазина */
 
 .wallet-card {
-  border-top: 4px solid var(--brand-color, #171717);
+  border-top: 4px solid var(--brand-color, var(--accent));
 }
 
 .wallet-brand {
@@ -424,13 +724,13 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .reward-card.available {
-  border: 1px solid #f0d060;
-  background: #fffbea;
+  border: 1px solid var(--warning);
+  background: var(--warning-bg);
 }
 
 .reward-card.redeemed {
@@ -453,7 +753,7 @@
 
 .reward-body span {
   font-size: 11px;
-  color: #999;
+  color: var(--text-secondary);
 }
 
 .redeemed-rewards {
@@ -463,7 +763,7 @@
 .redeemed-rewards summary {
   cursor: pointer;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
@@ -482,10 +782,10 @@
   flex: none;
   height: 36px;
   padding: 0 16px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: #fff;
-  color: #444;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -493,9 +793,9 @@
 }
 
 .menu-category-tab.active {
-  background: #171717;
-  border-color: #171717;
-  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
 }
 
 .menu-products {
@@ -509,8 +809,8 @@
   gap: 12px;
   padding: 12px;
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
 }
 
 .menu-product-image {
@@ -534,7 +834,7 @@
 
 .menu-product-description {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
 }
 
 .menu-product-footer {
@@ -551,8 +851,8 @@
 
 .menu-product-cashback {
   font-size: 11px;
-  color: #16834a;
-  background: #eafaf1;
+  color: var(--success);
+  background: var(--success-bg);
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -581,8 +881,8 @@
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: #e0433d;
-  color: #fff;
+  background: var(--danger);
+  color: #ffffff;
   font-size: 11px;
   font-weight: 700;
 }
@@ -596,23 +896,52 @@
 .message-card {
   padding: 14px 16px;
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, .05);
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
   cursor: pointer;
 }
 
 .message-card.unread {
-  border-left: 3px solid #171717;
-  background: #fafafa;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-surface-elevated);
 }
 
 .message-card p {
   margin: 0 0 6px;
   font-size: 13px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .message-date {
   font-size: 10px;
-  color: #999;
+  color: var(--text-secondary);
+}
+
+/* Тёмная тема: тонкая рамка на карточках — отделяет от градиента фона */
+:host-context([data-theme='dark']) {
+  .wallet-card,
+  .history,
+  .promotion-card,
+  .review-form,
+  .review-card,
+  .reward-card,
+  .menu-product-card,
+  .message-card,
+  .app-footer {
+    border: 1px solid var(--border);
+  }
+}
+
+/* FOOTER — как отдельная карточка, чтобы подпись была на фоне поверхности,
+   а не на градиенте body */
+
+.app-footer {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
 }

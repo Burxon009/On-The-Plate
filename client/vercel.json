@@ -1,0 +1,8 @@
+{
+  "framework": "angular",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/client/browser",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://on-the-plate.onrender.com/:path*" }
+  ]
+}

@@ -1,31 +1,79 @@
 /* You can add global styles to this file, and also import other style files */
 
 /*
- * Токены темы. Светлая — по умолчанию (:root), значения взяты из
- * существующих цветов app.scss / dashboard.scss. Тёмная — переопределяет
- * их при [data-theme="dark"] (атрибут ставит ThemeService на <html>).
- *
- * На этом шаге переменные пока применяются только к <body> и переключателю;
- * остальные захардкоженные цвета в компонентах переводятся отдельным шагом.
+ * Токены темы. Светлая — по умолчанию (:root), значения из существующих
+ * цветов приложения. Тёмная — тёмная «лесная зелёная» объёмная палитра,
+ * переопределяет их при [data-theme="dark"] (ThemeService ставит атрибут
+ * на <html>). Акцентный цвет — лесной зелёный #2D5A3D в обеих темах.
  */
 :root {
-  --bg-page: #f5f6f8;
-  --bg-surface: #ffffff;
+  /* поверхности */
+  --bg-page: #f5f6f8; /* фон всего экрана */
+  --bg-surface: #ffffff; /* карточки, панели */
+  --bg-surface-elevated: #f0f0f2; /* элементы поверх карточек */
+
+  /* текст */
   --text-primary: #171717;
   --text-secondary: #888888;
+
+  /* линии */
   --border: #dddddd;
-  --accent: #171717;
+
+  /* акцент — лесной зелёный, единый для обеих тем */
+  --accent: #2d5a3d;
+  --accent-text: #ffffff; /* текст/иконка на акцентном фоне */
+  --accent-hover: #366b49;
+
+  /* статусные цвета */
+  --success: #16834a;
+  --success-bg: #eafaf1;
+  --danger: #d92d20;
+  --warning: #b8860b;
+  --warning-bg: #fff7e6;
+
+  /* тень box-shadow */
+  --shadow-color: rgba(0, 0, 0, 0.1);
+
+  /* стекло для кнопок */
+  --glass-bg: rgba(0, 0, 0, 0.03);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  /* «премиальная» карточка кошелька */
+  --wallet-grad-1: #191919;
+  --wallet-grad-2: #303030;
 
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg-page: #0a0a0f;
-  --bg-surface: #16161f;
-  --text-primary: #f5f5f7;
-  --text-secondary: #a0a0ab;
-  --border: #2a2a35;
-  --accent: #8b5cf6;
+  /* тёмная лесная зелёная объёмная палитра */
+  --bg-page: #0f1f17;
+  --bg-surface: #1b3327; /* светлее фона — карточка «приподнята» */
+  --bg-surface-elevated: #234030;
+
+  --text-primary: #f5f5f7; /* ВСЕ основные тексты в тёмной теме — этот */
+  --text-secondary: #9db3a5; /* лёгкий зелёно-серый вместо серого */
+
+  --border: #2f4a3a;
+
+  --accent: #2d5a3d;
+  --accent-text: #ffffff;
+  --accent-hover: #366b49;
+
+  --success: #4ade80;
+  --success-bg: rgba(74, 222, 128, 0.16);
+  --danger: #f87171;
+  --warning: #fbbf24;
+  --warning-bg: rgba(251, 191, 36, 0.14);
+
+  /* зелёное свечение вместо чёрной тени */
+  --shadow-color: rgba(45, 90, 61, 0.35);
+
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+
+  --wallet-grad-1: #234030;
+  --wallet-grad-2: #14261c;
 
   color-scheme: dark;
 }
@@ -37,4 +85,10 @@ body {
   transition:
     background-color 0.4s ease,
     color 0.4s ease;
+}
+
+/* Тёмная тема: лёгкий радиальный градиент вместо плоского фона — объём */
+:root[data-theme='dark'] body {
+  background: radial-gradient(circle at 20% -10%, #234030 0%, #0f1f17 60%);
+  background-attachment: fixed;
 }

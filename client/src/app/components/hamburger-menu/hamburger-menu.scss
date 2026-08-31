@@ -1,0 +1,155 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ☰ — три полоски через ::before/::after + сам span */
+.hm-trigger {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px var(--shadow-color);
+  cursor: pointer;
+}
+
+.hm-bars,
+.hm-bars::before,
+.hm-bars::after {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-primary);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.hm-bars {
+  position: relative;
+}
+
+.hm-bars::before {
+  position: absolute;
+  top: -6px;
+  left: 0;
+}
+
+.hm-bars::after {
+  position: absolute;
+  top: 6px;
+  left: 0;
+}
+
+/* открытое состояние — ☰ превращается в × */
+.hm-trigger.open .hm-bars {
+  background: transparent;
+}
+
+.hm-trigger.open .hm-bars::before {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.hm-trigger.open .hm-bars::after {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* прозрачный слой для закрытия по клику вне панели */
+.hm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.hm-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 41;
+  width: 240px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 18px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 44px var(--shadow-color);
+  animation: hm-pop 0.2s ease;
+}
+
+/* Панель полупрозрачная — под ней должно читаться. В светлой теме
+   стекло почти невидимо, поэтому добавляем подложку поверхности. */
+:host-context(:root:not([data-theme='dark'])) .hm-panel {
+  background: var(--bg-surface);
+}
+
+.hm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.hm-row--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.hm-row-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.hm-item {
+  width: 100%;
+  padding: 11px 12px;
+  text-align: left;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.hm-item:hover {
+  background: var(--bg-surface-elevated);
+}
+
+.hm-item--logout {
+  color: var(--danger);
+}
+
+@keyframes hm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-panel {
+    animation-duration: 0.01ms;
+  }
+
+  .hm-bars,
+  .hm-bars::before,
+  .hm-bars::after {
+    transition-duration: 0.01ms;
+  }
+}

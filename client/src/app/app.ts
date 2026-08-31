@@ -5,10 +5,12 @@ import { RouterOutlet } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
+import { LanguageService } from './services/language.service';
 import { ThemeToggle } from './components/theme-toggle/theme-toggle';
+import { LanguageSwitcher } from './components/language-switcher/language-switcher';
 
 @Component({
-  imports: [RouterOutlet, FormsModule, ThemeToggle],
+  imports: [RouterOutlet, FormsModule, ThemeToggle, LanguageSwitcher],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -17,6 +19,8 @@ export class App {
   // Создаём сервис темы сразу при старте приложения, чтобы data-theme
   // на <html> проставился как можно раньше.
   private readonly theme = inject(ThemeService);
+
+  readonly lang = inject(LanguageService);
 
   protected get isLoggedIn() {
     return this.auth.isLoggedIn;
@@ -52,7 +56,7 @@ export class App {
     const normalizedEmail = this.normalizeEmail(this.email());
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      this.error.set('Некорректный email. Проверьте формат адреса.');
+      this.error.set(this.lang.t('errorEmailInvalid'));
       return;
     }
 
@@ -72,8 +76,8 @@ export class App {
       error: (error) => {
         this.error.set(
           error.name === 'TimeoutError'
-            ? 'Сервер отвечает слишком долго. Попробуйте ещё раз.'
-            : error.error?.message || 'Не удалось отправить код',
+            ? this.lang.t('errorServerSlow')
+            : error.error?.message || this.lang.t('errorRequestFailed'),
         );
       },
     });
@@ -90,12 +94,12 @@ export class App {
     }
 
     if (!this.code().trim()) {
-      this.error.set('Введите код из письма');
+      this.error.set(this.lang.t('errorEnterCode'));
       return;
     }
 
     if (!this.name().trim()) {
-      this.error.set('Введите ваше имя');
+      this.error.set(this.lang.t('errorEnterName'));
       return;
     }
 
@@ -116,8 +120,8 @@ export class App {
       error: (error) => {
         this.error.set(
           error.name === 'TimeoutError'
-            ? 'Сервер отвечает слишком долго. Попробуйте ещё раз.'
-            : error.error?.message || 'Не удалось подтвердить код',
+            ? this.lang.t('errorServerSlow')
+            : error.error?.message || this.lang.t('errorConfirmFailed'),
         );
       },
     });

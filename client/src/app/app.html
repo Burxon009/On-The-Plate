@@ -3,18 +3,18 @@
   <main class="card">
 
     <div class="card-header">
-      <div class="logo">U</div>
+      <app-language-switcher />
       <app-theme-toggle />
     </div>
 
-    <h1 style="font-size: 2rem; font-family: sans-serif;">On the plate</h1>
-    <p class="subtitle">Loyalty</p>
+    <h1>On the plate</h1>
+    <p class="subtitle">{{ lang.t('subtitle') }}</p>
 
     <section class="login">
-      <h2>Добро пожаловать 👋</h2>
+      <h2>{{ lang.t('loginTitle') }}</h2>
 
       <p class="description">
-        {{ codeRequested() ? 'Введите код из письма.' : 'Введите email, чтобы войти в программу лояльности.' }}
+        {{ codeRequested() ? lang.t('loginCodePrompt') : lang.t('loginPrompt') }}
       </p>
 
       @if (!codeRequested()) {
@@ -34,7 +34,7 @@
           type="submit"
           [disabled]="loading()"
         >
-          {{ loading() ? 'Вход...' : 'Продолжить' }}
+          {{ loading() ? lang.t('loginContinueLoading') : lang.t('loginContinue') }}
         </button>
 
       </form>
@@ -58,7 +58,7 @@
           name="name"
           [ngModel]="name()"
           (ngModelChange)="name.set($event)"
-          placeholder="Ваше имя"
+          [placeholder]="lang.t('loginNamePlaceholder')"
           autocomplete="name"
           required
         />
@@ -67,7 +67,7 @@
           type="submit"
           [disabled]="loading()"
         >
-          {{ loading() ? 'Проверка...' : 'Подтвердить код' }}
+          {{ loading() ? lang.t('loginConfirmLoading') : lang.t('loginConfirmCode') }}
         </button>
 
         <button
@@ -75,7 +75,7 @@
           class="link-button"
           (click)="changeEmail()"
         >
-          ← Изменить email
+          {{ lang.t('loginChangeEmail') }}
         </button>
 
       </form>
@@ -86,6 +86,8 @@
       }
 
     </section>
+
+    <footer class="app-footer">Developed by Burkhon</footer>
 
   </main>
 </div>
