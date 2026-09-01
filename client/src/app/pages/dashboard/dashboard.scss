@@ -57,11 +57,27 @@
 
 /* TOP */
 
+/* Шапка "липкая" — остаётся на месте при прокрутке. z-index 500: выше
+   обычного прокручиваемого контента (auto/0), но ниже полноэкранных
+   оверлеев (QR 1000+, профиль 1100, история 1200, greeting/unlock 9000+) —
+   те всё равно должны перекрывать её целиком. Собственная выпадашка
+   гамбургер-меню (z-index 40/41) — потомок топбара, поэтому открывается
+   поверх него без конфликта: сравнение идёт для .topbar целиком.
+   Отрицательные горизонтальные margin + такой же padding — фон "съедает"
+   боковой отступ .loyalty-app, чтобы бар был во всю ширину колонки. */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 500;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 22px;
+  margin: 0 -20px 22px;
+  padding: 14px 20px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .topbar-actions {
@@ -99,14 +115,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.store-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--text-secondary);
-  margin-bottom: 3px;
 }
 
 .topbar h1 {

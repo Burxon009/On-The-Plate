@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LanguageService } from '../../services/language.service';
 import { LockService } from '../../services/lock.service';
@@ -6,8 +6,15 @@ import { PinPad } from '../pin-pad/pin-pad';
 
 /**
  * Экран блокировки при повторных открытиях приложения (сессия ещё жива).
- * Биометрия (если включена) предлагается автоматически при открытии;
- * PIN — всегда доступный запасной способ.
+ * PIN виден и доступен сразу; биометрия — ТОЛЬКО по явному тапу на кнопку
+ * «Войти по Face ID / отпечатку», без авто-вызова при открытии экрана.
+ *
+ * Почему без авто-вызова: navigator.credentials.get() без явного жеста
+ * пользователя на мобильных браузерах ненадёжен (Chrome/Android может
+ * тихо отказать), а credential в принципе привязан к КОНКРЕТНОМУ
+ * устройству/authenticator'у — на новом устройстве его там и не будет,
+ * это не ошибка. Раз запрос теперь всегда идёт по явному тапу, молчать
+ * при неудаче нельзя — пользователь ждёт ответа на своё действие.
  */
 @Component({
   selector: 'app-lock-screen',
@@ -16,7 +23,7 @@ import { PinPad } from '../pin-pad/pin-pad';
   imports: [PinPad],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LockScreen implements OnInit {
+export class LockScreen {
   private readonly lock = inject(LockService);
   readonly lang = inject(LanguageService);
 
@@ -31,12 +38,7 @@ export class LockScreen implements OnInit {
   readonly biometryRunning = signal(false);
   readonly error = signal('');
 
-  ngOnInit(): void {
-    if (this.biometryEnabled()) {
-      void this.tryBiometry();
-    }
-  }
-
+  /** Вызывается ТОЛЬКО по явному тапу пользователя на кнопку биометрии. */
   async tryBiometry(): Promise<void> {
     if (this.busy() || this.biometryRunning()) return;
     this.biometryRunning.set(true);
@@ -44,10 +46,14 @@ export class LockScreen implements OnInit {
     try {
       await this.lock.unlockWithBiometry();
       this.unlocked.emit();
-    } catch (error) {
-      if (!isUserCancellation(error)) {
-        this.error.set(this.lang.t('lockBiometryFailed'));
-      }
+    } catch {
+      // Кнопку нажал сам пользователь — молчать в ответ нельзя. Браузер
+      // отдаёт один и тот же NotAllowedError и при отмене системного
+      // диалога, и при реальном сбое (нет credential на этом устройстве,
+      // таймаут) — WebAuthn их не различает, поэтому сообщаем в любом
+      // случае и подсказываем оба выхода: PIN или включить биометрию
+      // именно на этом устройстве через профиль.
+      this.error.set(this.lang.t('lockBiometryUnavailable'));
     } finally {
       this.biometryRunning.set(false);
     }
@@ -78,11 +84,4 @@ export class LockScreen implements OnInit {
   forgot(): void {
     this.lockedOut.emit();
   }
-}
-
-function isUserCancellation(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    (error.name === 'NotAllowedError' || error.name === 'AbortError')
-  );
 }

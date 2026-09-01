@@ -41,7 +41,6 @@ export const translations = {
     greetingNight: 'Доброй ночи',
 
     // — шапка / общее —
-    loyaltyProgram: 'ПРОГРАММА ЛОЯЛЬНОСТИ',
     clientFallback: 'Клиент',
     back: 'Назад',
 
@@ -179,7 +178,7 @@ export const translations = {
     lockLockedOut: 'Слишком много попыток. Войдите заново через email или номер.',
     lockUseBiometry: 'Войти по Face ID / отпечатку',
     lockUsePin: 'Ввести PIN-код',
-    lockBiometryFailed: 'Не удалось распознать. Введите PIN-код.',
+    lockBiometryUnavailable: 'Не удалось использовать биометрию на этом устройстве. Попробуйте PIN или включите Face ID/отпечаток в настройках профиля для этого устройства.',
     lockForgot: 'Забыли PIN? Войти заново',
     // — профиль: PIN и биометрия —
     profilePinChange: 'Изменить PIN-код',
@@ -226,7 +225,6 @@ export const translations = {
     greetingEvening: 'Xayrli kech',
     greetingNight: 'Xayrli tun',
 
-    loyaltyProgram: 'SODIQLIK DASTURI',
     clientFallback: 'Mijoz',
     back: 'Orqaga',
 
@@ -352,7 +350,7 @@ export const translations = {
     lockLockedOut: 'Urinishlar ko‘p bo‘ldi. Email yoki raqam orqali qaytadan kiring.',
     lockUseBiometry: 'Face ID / barmoq izi bilan kirish',
     lockUsePin: 'PIN-kod kiritish',
-    lockBiometryFailed: 'Aniqlab bo‘lmadi. PIN-kodni kiriting.',
+    lockBiometryUnavailable: 'Bu qurilmada biometriyadan foydalanib bo‘lmadi. PIN-kodni sinab ko‘ring yoki profil sozlamalarida shu qurilma uchun Face ID/barmoq izini yoqing.',
     lockForgot: 'PIN esdan chiqdimi? Qaytadan kirish',
     // — profil: PIN va biometriya —
     profilePinChange: 'PIN-kodni o‘zgartirish',
@@ -399,7 +397,6 @@ export const translations = {
     greetingEvening: 'Good evening',
     greetingNight: 'Good night',
 
-    loyaltyProgram: 'LOYALTY PROGRAM',
     clientFallback: 'Client',
     back: 'Back',
 
@@ -525,7 +522,7 @@ export const translations = {
     lockLockedOut: 'Too many attempts. Sign in again with email or phone.',
     lockUseBiometry: 'Use Face ID / fingerprint',
     lockUsePin: 'Enter PIN',
-    lockBiometryFailed: 'Couldn’t recognize you. Enter your PIN.',
+    lockBiometryUnavailable: 'Couldn’t use biometrics on this device. Try your PIN, or enable Face ID/fingerprint for this device in profile settings.',
     lockForgot: 'Forgot your PIN? Sign in again',
     // — profile: PIN and biometrics —
     profilePinChange: 'Change PIN',
