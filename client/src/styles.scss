@@ -1,58 +1,82 @@
 /* You can add global styles to this file, and also import other style files */
 
 /*
- * Токены темы. Светлая — по умолчанию (:root), значения из существующих
- * цветов приложения. Тёмная — тёмная «лесная зелёная» объёмная палитра,
- * переопределяет их при [data-theme="dark"] (ThemeService ставит атрибут
- * на <html>). Акцентный цвет — лесной зелёный #2D5A3D в обеих темах.
+ * Токены темы. Светлая — по умолчанию (:root). Тёмная — тёмная «лесная
+ * зелёная» объёмная палитра, переопределяет их при [data-theme="dark"]
+ * (ThemeService ставит атрибут на <html>).
+ *
+ * Акцент — лесной зелёный #2D5A3D. В СВЕТЛОЙ теме он подаётся «стеклянно»
+ * (полупрозрачная заливка + blur + зелёная рамка + зелёное свечение),
+ * а НЕ сплошной заливкой. В ТЁМНОЙ теме зелёный остаётся плотным.
  */
 :root {
   /* поверхности */
-  --bg-page: #f5f6f8; /* фон всего экрана */
-  --bg-surface: #ffffff; /* карточки, панели */
-  --bg-surface-elevated: #f0f0f2; /* элементы поверх карточек */
+  --bg-page: #f4f6f4;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #eef1ee;
 
   /* текст */
-  --text-primary: #171717;
-  --text-secondary: #888888;
+  --text-primary: #1a1f1c;
+  --text-secondary: #6f7a72;
 
   /* линии */
-  --border: #dddddd;
+  --border: #dde3de;
 
-  /* акцент — лесной зелёный, единый для обеих тем */
+  /* акцент — базовый цвет (рамки фокуса, текстовые акценты, иконки) */
   --accent: #2d5a3d;
-  --accent-text: #ffffff; /* текст/иконка на акцентном фоне */
+  --accent-text: #ffffff;
   --accent-hover: #366b49;
+
+  /* СТЕКЛЯННО-ЗЕЛЁНЫЙ акцент — кнопки, активные вкладки, выделения.
+     Мягкий приглушённый лесной зелёный: полупрозрачная подложка +
+     стекло, а НЕ плоская сплошная заливка. */
+  --accent-surface-bg: rgba(45, 90, 61, 0.1);
+  --accent-surface-hover: rgba(45, 90, 61, 0.16);
+  --accent-surface-border: rgba(45, 90, 61, 0.22);
+  --accent-surface-shadow: 0 4px 16px rgba(45, 90, 61, 0.12);
+  --accent-surface-text: #2b4d38;
+  /* «плотный» зелёный там, где нужна читаемая заливка (прогресс-бар) */
+  --accent-strong: rgba(45, 90, 61, 0.5);
+
+  /* нейтральное стекло — вторичные кнопки/панели.
+     На светлых поверхностях белая рамка невидима, поэтому граница —
+     тонкая тёмно-зелёная линия; фон полупрозрачно-белый + blur. */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(20, 40, 28, 0.14);
+  --glass-hover: rgba(20, 40, 28, 0.06);
+  --glass-blur: blur(12px);
+
+  /* карточка «кошелёк» — мягкая стеклянно-зелёная в светлой теме */
+  --wallet-bg: linear-gradient(135deg, rgba(45, 90, 61, 0.12), rgba(45, 90, 61, 0.04));
+  --wallet-border: rgba(45, 90, 61, 0.16);
+  --wallet-text: #223f2c;
+  --wallet-text-dim: rgba(34, 63, 44, 0.6);
+  --wallet-chip: rgba(45, 90, 61, 0.07);
 
   /* статусные цвета */
   --success: #16834a;
-  --success-bg: #eafaf1;
+  --success-bg: #e7f6ec;
   --danger: #d92d20;
-  --warning: #b8860b;
-  --warning-bg: #fff7e6;
+  --warning: #a97400;
+  --warning-bg: #fdf3e2;
 
   /* тень box-shadow */
-  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-color: rgba(20, 40, 28, 0.1);
 
-  /* стекло для кнопок */
-  --glass-bg: rgba(0, 0, 0, 0.03);
-  --glass-border: rgba(0, 0, 0, 0.08);
-
-  /* «премиальная» карточка кошелька */
-  --wallet-grad-1: #191919;
-  --wallet-grad-2: #303030;
+  /* типографика */
+  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  /* тёмная лесная зелёная объёмная палитра */
   --bg-page: #0f1f17;
-  --bg-surface: #1b3327; /* светлее фона — карточка «приподнята» */
+  --bg-surface: #1b3327;
   --bg-surface-elevated: #234030;
 
-  --text-primary: #f5f5f7; /* ВСЕ основные тексты в тёмной теме — этот */
-  --text-secondary: #9db3a5; /* лёгкий зелёно-серый вместо серого */
+  --text-primary: #f5f5f7;
+  --text-secondary: #9db3a5;
 
   --border: #2f4a3a;
 
@@ -60,28 +84,48 @@
   --accent-text: #ffffff;
   --accent-hover: #366b49;
 
+  /* тёмная тема: зелёный остаётся плотным/насыщенным */
+  --accent-surface-bg: var(--accent);
+  --accent-surface-hover: var(--accent-hover);
+  --accent-surface-border: var(--accent);
+  --accent-surface-shadow: 0 4px 20px var(--shadow-color);
+  --accent-surface-text: var(--accent-text);
+  --accent-strong: var(--accent);
+
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-hover: rgba(255, 255, 255, 0.14);
+  --glass-blur: blur(12px);
+
+  /* кошелёк — премиальный тёмно-зелёный градиент (как было) */
+  --wallet-bg: linear-gradient(135deg, #234030, #14261c);
+  --wallet-border: var(--border);
+  --wallet-text: #ffffff;
+  --wallet-text-dim: rgba(255, 255, 255, 0.65);
+  --wallet-chip: rgba(255, 255, 255, 0.1);
+
   --success: #4ade80;
   --success-bg: rgba(74, 222, 128, 0.16);
   --danger: #f87171;
   --warning: #fbbf24;
   --warning-bg: rgba(251, 191, 36, 0.14);
 
-  /* зелёное свечение вместо чёрной тени */
   --shadow-color: rgba(45, 90, 61, 0.35);
 
-  --glass-bg: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.15);
-
-  --wallet-grad-1: #234030;
-  --wallet-grad-2: #14261c;
-
   color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   background: var(--bg-page);
   color: var(--text-primary);
+  font-family: var(--font-body);
+  letter-spacing: 0.012em;
+  -webkit-font-smoothing: antialiased;
   transition:
     background-color 0.4s ease,
     color 0.4s ease;
@@ -91,4 +135,59 @@ body {
 :root[data-theme='dark'] body {
   background: radial-gradient(circle at 20% -10%, #234030 0%, #0f1f17 60%);
   background-attachment: fixed;
+}
+
+/* Заголовки — характерный serif, в духе логотипа «On the plate» */
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  letter-spacing: 0.004em;
+  font-weight: 600;
+}
+
+/* Формы наследуют интерфейсный шрифт (браузер по умолчанию ставит свой) */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+/* Подсказки в полях — в тон вторичному тексту, а не дефолтный серый */
+::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.75;
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+/* Плавность по всему приложению — общий стандарт появления/исчезновения.
+   Конкретные @if-блоки подхватывают эти классы через animate.enter/leave. */
+@keyframes app-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-fade-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(4px); }
+}
+
+.app-enter {
+  animation: app-fade-in 0.25s ease both;
+}
+
+.app-leave {
+  animation: app-fade-out 0.2s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

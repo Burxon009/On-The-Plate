@@ -5,10 +5,14 @@
   display: block;
 }
 
+:host(.ps-leave) {
+  animation: ps-host-out 0.2s ease forwards;
+}
+
 .ps-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 20, 0.6);
+  background: rgba(10, 16, 12, 0.55);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   animation: ps-fade 0.25s ease;
@@ -20,13 +24,13 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: min(92vw, 420px);
-  max-height: 88vh;
+  max-height: 88dvh;
   overflow-y: auto;
-  padding: 24px;
+  padding: 26px;
   border-radius: 24px;
   background: var(--bg-surface);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 20px 60px var(--shadow-color);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px var(--shadow-color);
   color: var(--text-primary);
   animation: ps-pop 0.25s ease;
 }
@@ -35,34 +39,41 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 22px;
 }
 
 .ps-header h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 21px;
+  font-weight: 600;
 }
 
 .ps-close {
-  width: 36px;
-  height: 36px;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
   border: 1px solid var(--glass-border);
   border-radius: 50%;
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   color: var(--text-primary);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ps-close:hover {
+  background: var(--glass-hover);
 }
 
 .ps-avatar-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 16px;
+  margin-bottom: 22px;
 }
 
 .ps-avatar {
@@ -73,10 +84,14 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-size: 26px;
+  background: var(--accent-surface-bg);
+  border: 1px solid var(--accent-surface-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--accent-surface-text);
+  font-size: 24px;
   font-weight: 700;
+  font-family: var(--font-heading);
 }
 
 .ps-avatar img {
@@ -93,80 +108,122 @@
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-primary);
   font-size: 13px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.ps-file:hover {
+  background: var(--glass-hover);
 }
 
 .ps-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 7px;
+  margin-bottom: 14px;
   font-size: 12px;
+  letter-spacing: 0.02em;
   color: var(--text-secondary);
 }
 
 .ps-field input {
-  height: 44px;
-  padding: 0 16px;
+  height: 46px;
+  padding: 0 18px;
   border: 1px solid var(--border);
   border-radius: 999px;
   outline: none;
   font-size: 15px;
   background: var(--bg-surface);
   color: var(--text-primary);
+  transition: border-color 0.2s ease;
 }
 
 .ps-field input:focus {
   border-color: var(--accent);
 }
 
+/* Кнопки профиля — единый стеклянный стиль (см. общий подход приложения) */
 .ps-primary,
 .ps-secondary {
   width: 100%;
   height: 46px;
-  border: 0;
   border-radius: 999px;
+  border: 1px solid var(--accent-surface-border);
+  background: var(--accent-surface-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--accent-surface-shadow);
+  color: var(--accent-surface-text);
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  margin-top: 4px;
+  margin-top: 6px;
+  transition:
+    background-color 0.2s ease,
+    transform 0.08s ease;
 }
 
-.ps-primary {
-  background: var(--accent);
-  color: var(--accent-text);
+.ps-primary:hover,
+.ps-secondary:hover {
+  background: var(--accent-surface-hover);
 }
 
-.ps-primary:disabled {
+.ps-primary:active,
+.ps-secondary:active {
+  transform: scale(0.98);
+}
+
+.ps-primary:disabled,
+.ps-secondary:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
+/* Вторичная кнопка — нейтральное стекло, чтобы отличать от основной */
 .ps-secondary {
+  border-color: var(--glass-border);
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  box-shadow: none;
   color: var(--text-primary);
 }
 
+.ps-secondary:hover {
+  background: var(--glass-hover);
+}
+
+/* Тёмная тема: кнопки — нейтральное стекло (зелёный не заливкой) */
+:host-context([data-theme='dark']) .ps-primary {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  color: var(--text-primary);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 20px var(--shadow-color);
+}
+
+:host-context([data-theme='dark']) .ps-primary:hover {
+  background: var(--glass-hover);
+}
+
 .ps-divider {
-  margin: 20px 0 16px;
+  margin: 22px 0 18px;
   border: 0;
   border-top: 1px solid var(--border);
 }
 
 .ps-ok {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   font-size: 13px;
   color: var(--success);
 }
 
 .ps-error {
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   font-size: 13px;
   color: var(--danger);
 }
@@ -185,6 +242,10 @@
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
+}
+
+@keyframes ps-host-out {
+  to { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

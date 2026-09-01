@@ -1,8 +1,7 @@
 /**
- * Словарь переводов. Пока покрыты только ключевые тексты экрана входа и
- * главного экрана — список расширяется постепенно. Русский (`ru`) —
- * источник истины и фолбэк: если ключа нет в выбранном языке, берётся
- * значение из `ru`, а если и там нет — сам ключ.
+ * Словарь переводов. Русский (`ru`) — источник истины и фолбэк: если
+ * ключа нет в выбранном языке, берётся значение из `ru`, а если и там
+ * нет — сам ключ.
  */
 export type Lang = 'ru' | 'uz' | 'en';
 
@@ -18,9 +17,8 @@ export const translations = {
     loginContinueLoading: 'Вход...',
     loginConfirmCode: 'Подтвердить код',
     loginConfirmLoading: 'Проверка...',
-    loginChangeEmail: '← Изменить email',
+    loginChangeEmail: 'Изменить email',
     loginNamePlaceholder: 'Ваше имя',
-    subtitle: 'Loyalty',
     errorEmailInvalid: 'Некорректный email. Проверьте формат адреса.',
     errorServerSlow: 'Сервер отвечает слишком долго. Попробуйте ещё раз.',
     errorRequestFailed: 'Не удалось отправить код',
@@ -28,7 +26,17 @@ export const translations = {
     errorEnterCode: 'Введите код из письма',
     errorEnterName: 'Введите ваше имя',
 
-    // — главный экран —
+    greetingMorning: 'Доброе утро',
+    greetingDay: 'Добрый день',
+    greetingEvening: 'Добрый вечер',
+    greetingNight: 'Доброй ночи',
+
+    // — шапка / общее —
+    loyaltyProgram: 'ПРОГРАММА ЛОЯЛЬНОСТИ',
+    clientFallback: 'Клиент',
+    back: 'Назад',
+
+    // — заголовки блоков —
     blockPromotions: 'Акции',
     blockReviews: 'Отзывы',
     blockRewards: 'Rewards',
@@ -39,6 +47,92 @@ export const translations = {
     blockStores: 'Магазины',
     myQr: 'Мой QR',
     walletTitle: 'Мой кошелёк',
+
+    // — магазины —
+    storeSelected: 'Выбранный магазин',
+    storeIdField: 'ID магазина',
+    storeAdd: 'Добавить магазин',
+    storeAdding: 'Добавление...',
+    storesLoading: 'Загрузка магазинов...',
+    storesEmpty: 'Подключённых магазинов пока нет.',
+    storeIdInvalid: 'Введите корректный ID магазина',
+    storeAlreadyAdded: 'Этот магазин уже добавлен',
+    storeNotFound: 'Магазин не найден',
+    storeJoinFailed: 'Не удалось добавить магазин',
+    storesLoadFailed: 'Не удалось загрузить магазины',
+
+    // — кошелёк —
+    walletCashback: 'Cashback',
+    walletPurchases: 'Покупки',
+    walletSeeHistory: 'См. историю операций',
+    walletLoading: 'Загрузка...',
+    walletBonuses: 'бонусов',
+    walletUnavailable: 'Баланс недоступен',
+    walletWrongStore: 'Сервер вернул кошелёк другого магазина',
+    walletLoadFailed: 'Не удалось загрузить баланс',
+
+    // — акции —
+    promoLoading: 'Загрузка акций...',
+    promoRewardPrefix: 'Награда',
+    promoLoadFailed: 'Не удалось загрузить акции',
+
+    // — отзывы —
+    reviewYourRating: 'Ваша оценка',
+    reviewRating5: 'Отлично',
+    reviewRating4: 'Хорошо',
+    reviewRating3: 'Нормально',
+    reviewRating2: 'Плохо',
+    reviewRating1: 'Ужасно',
+    reviewCommentLabel: 'Комментарий (необязательно)',
+    reviewCommentPlaceholder: 'Расскажите, как вам у нас...',
+    reviewSubmit: 'Оставить отзыв',
+    reviewSubmitting: 'Отправка...',
+    reviewThanks: 'Спасибо за отзыв! ✅',
+    reviewsLoading: 'Загрузка отзывов...',
+    reviewsEmpty: 'Пока отзывов нет — станьте первым!',
+    reviewRatingRange: 'Выберите оценку от 1 до 5',
+    reviewSubmitFailed: 'Не удалось отправить отзыв',
+    reviewsLoadFailed: 'Не удалось загрузить отзывы',
+
+    // — rewards —
+    rewardsLoading: 'Загрузка наград...',
+    rewardsEmpty: 'Пока наград нет — они появятся, как только вы выполните условия акции.',
+    rewardShowAtCounter: 'Покажите эту награду на кассе',
+    rewardsUsedTitle: 'Использованные награды',
+    rewardUsedPrefix: 'Использовано',
+    rewardsLoadFailed: 'Не удалось загрузить награды',
+
+    // — меню —
+    menuLoading: 'Загрузка меню...',
+    menuUnavailable: 'Меню магазина пока недоступно.',
+    menuCategoryEmpty: 'В этой категории пока нет товаров.',
+    menuCurrency: 'сум',
+    menuCashbackSuffix: 'кэшбэк',
+    menuLoadFailed: 'Не удалось загрузить меню',
+
+    // — сообщения —
+    messagesLoading: 'Загрузка сообщений...',
+    messagesEmpty: 'Сообщений от магазина пока нет.',
+    messagesLoadFailed: 'Не удалось загрузить сообщения',
+
+    // — новинки —
+    newsEmpty: 'Новинок пока нет.',
+
+    // — QR —
+    qrOpenLabel: 'Показать мой QR-код',
+    qrCloseLabel: 'Закрыть QR-код',
+    qrCloseBtn: 'Закрыть',
+    qrLoading: 'Загрузка QR-кода...',
+    qrLoadFailed: 'Не удалось загрузить QR-код',
+
+    // — история операций (экран) —
+    historyLoading: 'Загрузка истории...',
+    historyEmpty: 'Операций пока нет.',
+    historyLoadError: 'Не удалось загрузить историю операций',
+    txCashback: 'Кешбэк',
+    txSpend: 'Списание бонусов',
+    txAdjustment: 'Корректировка',
+    txBalanceAfter: 'Баланс',
 
     // — меню / профиль —
     menuTheme: 'Тема',
@@ -67,15 +161,23 @@ export const translations = {
     loginContinueLoading: 'Kirish...',
     loginConfirmCode: 'Kodni tasdiqlash',
     loginConfirmLoading: 'Tekshirilmoqda...',
-    loginChangeEmail: '← Emailni oʻzgartirish',
+    loginChangeEmail: 'Emailni oʻzgartirish',
     loginNamePlaceholder: 'Ismingiz',
-    subtitle: 'Loyalty',
     errorEmailInvalid: 'Email notoʻgʻri. Manzil formatini tekshiring.',
     errorServerSlow: 'Server juda sekin javob bermoqda. Qayta urinib koʻring.',
     errorRequestFailed: 'Kodni yuborib boʻlmadi',
     errorConfirmFailed: 'Kodni tasdiqlab boʻlmadi',
     errorEnterCode: 'Xatdagi kodni kiriting',
     errorEnterName: 'Ismingizni kiriting',
+
+    greetingMorning: 'Xayrli tong',
+    greetingDay: 'Xayrli kun',
+    greetingEvening: 'Xayrli kech',
+    greetingNight: 'Xayrli tun',
+
+    loyaltyProgram: 'SODIQLIK DASTURI',
+    clientFallback: 'Mijoz',
+    back: 'Orqaga',
 
     blockPromotions: 'Aksiyalar',
     blockReviews: 'Sharhlar',
@@ -87,6 +189,82 @@ export const translations = {
     blockStores: 'Doʻkonlar',
     myQr: 'Mening QR',
     walletTitle: 'Mening hamyonim',
+
+    storeSelected: 'Tanlangan doʻkon',
+    storeIdField: 'Doʻkon ID',
+    storeAdd: 'Doʻkon qoʻshish',
+    storeAdding: 'Qoʻshilmoqda...',
+    storesLoading: 'Doʻkonlar yuklanmoqda...',
+    storesEmpty: 'Hozircha ulangan doʻkonlar yoʻq.',
+    storeIdInvalid: 'Toʻgʻri doʻkon ID kiriting',
+    storeAlreadyAdded: 'Bu doʻkon allaqachon qoʻshilgan',
+    storeNotFound: 'Doʻkon topilmadi',
+    storeJoinFailed: 'Doʻkonni qoʻshib boʻlmadi',
+    storesLoadFailed: 'Doʻkonlarni yuklab boʻlmadi',
+
+    walletCashback: 'Cashback',
+    walletPurchases: 'Xaridlar',
+    walletSeeHistory: 'Amaliyotlar tarixini koʻrish',
+    walletLoading: 'Yuklanmoqda...',
+    walletBonuses: 'bonus',
+    walletUnavailable: 'Balans mavjud emas',
+    walletWrongStore: 'Server boshqa doʻkon hamyonini qaytardi',
+    walletLoadFailed: 'Balansni yuklab boʻlmadi',
+
+    promoLoading: 'Aksiyalar yuklanmoqda...',
+    promoRewardPrefix: 'Mukofot',
+    promoLoadFailed: 'Aksiyalarni yuklab boʻlmadi',
+
+    reviewYourRating: 'Bahoyingiz',
+    reviewRating5: 'Aʼlo',
+    reviewRating4: 'Yaxshi',
+    reviewRating3: 'Oʻrtacha',
+    reviewRating2: 'Yomon',
+    reviewRating1: 'Juda yomon',
+    reviewCommentLabel: 'Izoh (ixtiyoriy)',
+    reviewCommentPlaceholder: 'Bizda qanday boʻldi, ayting...',
+    reviewSubmit: 'Sharh qoldirish',
+    reviewSubmitting: 'Yuborilmoqda...',
+    reviewThanks: 'Sharh uchun rahmat! ✅',
+    reviewsLoading: 'Sharhlar yuklanmoqda...',
+    reviewsEmpty: 'Hozircha sharhlar yoʻq — birinchi boʻling!',
+    reviewRatingRange: '1 dan 5 gacha baho tanlang',
+    reviewSubmitFailed: 'Sharhni yuborib boʻlmadi',
+    reviewsLoadFailed: 'Sharhlarni yuklab boʻlmadi',
+
+    rewardsLoading: 'Mukofotlar yuklanmoqda...',
+    rewardsEmpty: 'Hozircha mukofotlar yoʻq — aksiya shartlarini bajarganingizda paydo boʻladi.',
+    rewardShowAtCounter: 'Bu mukofotni kassada koʻrsating',
+    rewardsUsedTitle: 'Ishlatilgan mukofotlar',
+    rewardUsedPrefix: 'Ishlatilgan',
+    rewardsLoadFailed: 'Mukofotlarni yuklab boʻlmadi',
+
+    menuLoading: 'Menyu yuklanmoqda...',
+    menuUnavailable: 'Doʻkon menyusi hozircha mavjud emas.',
+    menuCategoryEmpty: 'Bu turkumda hozircha mahsulotlar yoʻq.',
+    menuCurrency: 'soʻm',
+    menuCashbackSuffix: 'keshbek',
+    menuLoadFailed: 'Menyuni yuklab boʻlmadi',
+
+    messagesLoading: 'Xabarlar yuklanmoqda...',
+    messagesEmpty: 'Doʻkondan hozircha xabarlar yoʻq.',
+    messagesLoadFailed: 'Xabarlarni yuklab boʻlmadi',
+
+    newsEmpty: 'Hozircha yangiliklar yoʻq.',
+
+    qrOpenLabel: 'QR kodimni koʻrsatish',
+    qrCloseLabel: 'QR kodni yopish',
+    qrCloseBtn: 'Yopish',
+    qrLoading: 'QR kod yuklanmoqda...',
+    qrLoadFailed: 'QR kodni yuklab boʻlmadi',
+
+    historyLoading: 'Tarix yuklanmoqda...',
+    historyEmpty: 'Hozircha amaliyotlar yoʻq.',
+    historyLoadError: 'Amaliyotlar tarixini yuklab boʻlmadi',
+    txCashback: 'Keshbek',
+    txSpend: 'Bonuslar yechildi',
+    txAdjustment: 'Tuzatish',
+    txBalanceAfter: 'Balans',
 
     menuTheme: 'Mavzu',
     menuLanguage: 'Til',
@@ -114,15 +292,23 @@ export const translations = {
     loginContinueLoading: 'Signing in...',
     loginConfirmCode: 'Confirm code',
     loginConfirmLoading: 'Checking...',
-    loginChangeEmail: '← Change email',
+    loginChangeEmail: 'Change email',
     loginNamePlaceholder: 'Your name',
-    subtitle: 'Loyalty',
     errorEmailInvalid: 'Invalid email. Check the address format.',
     errorServerSlow: 'The server is taking too long. Please try again.',
     errorRequestFailed: 'Could not send the code',
     errorConfirmFailed: 'Could not confirm the code',
     errorEnterCode: 'Enter the code from the email',
     errorEnterName: 'Enter your name',
+
+    greetingMorning: 'Good morning',
+    greetingDay: 'Good afternoon',
+    greetingEvening: 'Good evening',
+    greetingNight: 'Good night',
+
+    loyaltyProgram: 'LOYALTY PROGRAM',
+    clientFallback: 'Client',
+    back: 'Back',
 
     blockPromotions: 'Promotions',
     blockReviews: 'Reviews',
@@ -134,6 +320,82 @@ export const translations = {
     blockStores: 'Stores',
     myQr: 'My QR',
     walletTitle: 'My wallet',
+
+    storeSelected: 'Selected store',
+    storeIdField: 'Store ID',
+    storeAdd: 'Add store',
+    storeAdding: 'Adding...',
+    storesLoading: 'Loading stores...',
+    storesEmpty: 'No connected stores yet.',
+    storeIdInvalid: 'Enter a valid store ID',
+    storeAlreadyAdded: 'This store is already added',
+    storeNotFound: 'Store not found',
+    storeJoinFailed: 'Could not add the store',
+    storesLoadFailed: 'Could not load stores',
+
+    walletCashback: 'Cashback',
+    walletPurchases: 'Purchases',
+    walletSeeHistory: 'See transaction history',
+    walletLoading: 'Loading...',
+    walletBonuses: 'bonuses',
+    walletUnavailable: 'Balance unavailable',
+    walletWrongStore: 'The server returned a wallet for a different store',
+    walletLoadFailed: 'Could not load the balance',
+
+    promoLoading: 'Loading promotions...',
+    promoRewardPrefix: 'Reward',
+    promoLoadFailed: 'Could not load promotions',
+
+    reviewYourRating: 'Your rating',
+    reviewRating5: 'Excellent',
+    reviewRating4: 'Good',
+    reviewRating3: 'OK',
+    reviewRating2: 'Poor',
+    reviewRating1: 'Terrible',
+    reviewCommentLabel: 'Comment (optional)',
+    reviewCommentPlaceholder: 'Tell us how it went...',
+    reviewSubmit: 'Leave a review',
+    reviewSubmitting: 'Sending...',
+    reviewThanks: 'Thanks for your review! ✅',
+    reviewsLoading: 'Loading reviews...',
+    reviewsEmpty: 'No reviews yet — be the first!',
+    reviewRatingRange: 'Choose a rating from 1 to 5',
+    reviewSubmitFailed: 'Could not submit the review',
+    reviewsLoadFailed: 'Could not load reviews',
+
+    rewardsLoading: 'Loading rewards...',
+    rewardsEmpty: 'No rewards yet — they appear once you meet a promotion’s conditions.',
+    rewardShowAtCounter: 'Show this reward at the counter',
+    rewardsUsedTitle: 'Used rewards',
+    rewardUsedPrefix: 'Used',
+    rewardsLoadFailed: 'Could not load rewards',
+
+    menuLoading: 'Loading menu...',
+    menuUnavailable: 'The store menu is not available yet.',
+    menuCategoryEmpty: 'No items in this category yet.',
+    menuCurrency: 'UZS',
+    menuCashbackSuffix: 'cashback',
+    menuLoadFailed: 'Could not load the menu',
+
+    messagesLoading: 'Loading messages...',
+    messagesEmpty: 'No messages from the store yet.',
+    messagesLoadFailed: 'Could not load messages',
+
+    newsEmpty: 'Nothing new yet.',
+
+    qrOpenLabel: 'Show my QR code',
+    qrCloseLabel: 'Close QR code',
+    qrCloseBtn: 'Close',
+    qrLoading: 'Loading QR code...',
+    qrLoadFailed: 'Could not load the QR code',
+
+    historyLoading: 'Loading history...',
+    historyEmpty: 'No transactions yet.',
+    historyLoadError: 'Could not load transaction history',
+    txCashback: 'Cashback',
+    txSpend: 'Bonuses spent',
+    txAdjustment: 'Adjustment',
+    txBalanceAfter: 'Balance',
 
     menuTheme: 'Theme',
     menuLanguage: 'Language',

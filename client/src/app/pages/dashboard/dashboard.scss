@@ -12,7 +12,47 @@
 .loyalty-app {
   width: min(100%, 520px);
   margin: 0 auto;
-  padding: 22px 18px 110px;
+  padding: 24px 20px 116px;
+}
+
+/* ── Единый стиль кнопок дашборда ──────────────────────────────────
+   Светлая тема — стеклянно-зелёные (полупрозрачная заливка + blur +
+   зелёная рамка + зелёное свечение). Тёмная тема — нейтральное стекло
+   (перекрывается в блоке :host-context([data-theme='dark']) ниже). */
+.store-controls button,
+.review-form button {
+  width: 100%;
+  height: 46px;
+  border: 1px solid var(--accent-surface-border);
+  border-radius: 999px;
+  background: var(--accent-surface-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--accent-surface-shadow);
+  color: var(--accent-surface-text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.08s ease;
+}
+
+.store-controls button:hover,
+.review-form button:hover {
+  background: var(--accent-surface-hover);
+}
+
+.store-controls button:active,
+.review-form button:active {
+  transform: scale(0.98);
+}
+
+.store-controls button:disabled,
+.review-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 /* TOP */
@@ -45,10 +85,14 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-size: 17px;
+  background: var(--accent-surface-bg);
+  border: 1px solid var(--accent-surface-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--accent-surface-text);
+  font-size: 16px;
   font-weight: 700;
+  font-family: var(--font-heading);
 }
 
 .topbar-user .avatar img {
@@ -67,21 +111,10 @@
 
 .topbar h1 {
   margin: 0;
-  font-size: 27px;
-  font-weight: 800;
-  letter-spacing: -0.7px;
-}
-
-.icon-button {
-  height: 44px;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 18px;
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  font-size: 14px;
-  cursor: pointer;
-  box-shadow: 0 6px 20px var(--shadow-color);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.15;
 }
 
 
@@ -97,6 +130,7 @@ input {
   font-size: 15px;
   background: var(--bg-surface);
   color: var(--text-primary);
+  transition: border-color 0.2s ease;
 }
 
 input:focus {
@@ -110,15 +144,17 @@ input:focus {
 .store-controls label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 7px;
+  margin-bottom: 14px;
   font-size: 12px;
+  letter-spacing: 0.02em;
   color: var(--text-secondary);
 }
 
 .store-controls form {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .store-controls select,
@@ -129,46 +165,58 @@ input:focus {
   padding: 0 16px;
   border: 1px solid var(--border);
   border-radius: 999px;
+  outline: none;
   background: var(--bg-surface);
   color: var(--text-primary);
   font-size: 15px;
   font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.store-controls select:focus,
+.store-controls input:focus {
+  border-color: var(--accent);
 }
 
 
-/* WALLET */
+/* WALLET — стеклянно-зелёная карточка в светлой теме, премиальный
+   тёмно-зелёный градиент в тёмной (всё через --wallet-* токены). */
 
 .wallet-card {
+  margin-top: 20px; /* отбивка от секции «Магазины» / кнопки «Добавить магазин» */
   padding: 24px;
   border-radius: 27px;
-  background: linear-gradient(135deg, var(--wallet-grad-1), var(--wallet-grad-2));
-  color: #ffffff;
+  background: var(--wallet-bg);
+  border: 1px solid var(--wallet-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--wallet-text);
   box-shadow: 0 12px 40px var(--shadow-color);
 }
 
 .wallet-top {
   display: flex;
   justify-content: space-between;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--wallet-text-dim);
   font-size: 13px;
 }
 
 .wallet-store {
-  color: #ffffff;
+  color: var(--wallet-text);
   font-weight: 600;
 }
 
 .balance {
-  margin: 24px 0;
+  margin: 22px 0;
   font-size: 40px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -1.5px;
 }
 
 .balance small {
   font-size: 16px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--wallet-text-dim);
 }
 
 .wallet-info {
@@ -180,13 +228,13 @@ input:focus {
 .wallet-info div {
   padding: 13px;
   border-radius: 15px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--wallet-chip);
 }
 
 .wallet-info span {
   display: block;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--wallet-text-dim);
   margin-bottom: 5px;
 }
 
@@ -194,23 +242,50 @@ input:focus {
   font-size: 14px;
 }
 
+/* «Покупки → см. историю операций» — рабочая ссылка на раздел истории */
+.wallet-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--wallet-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 /* SECTIONS */
 
 .section {
-  margin-top: 27px;
+  margin-top: 28px;
 }
 
 .section-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 13px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .section-title h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.004em;
+}
+
+/* Пустые/загрузочные состояния блоков — мягкий вторичный текст */
+.section > p,
+.store-controls > p,
+.home-blocks .client-block > p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .section-title button {
@@ -221,76 +296,62 @@ input:focus {
   cursor: pointer;
 }
 
-/* HISTORY */
+/* HISTORY — компактная карточка-ссылка, открывает полноэкранный
+   <app-transaction-history>. Сам список операций живёт в том компоненте. */
 
-.history {
-  overflow: hidden;
-  border-radius: 20px;
-  background: var(--bg-surface);
-  box-shadow: 0 6px 20px var(--shadow-color);
-}
-
-.history-item {
+.history-card {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 15px;
-  border-bottom: 1px solid var(--border);
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--bg-surface);
+  box-shadow: 0 6px 20px var(--shadow-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 0.2s ease,
+    transform 0.08s ease;
 }
 
-.history-item:last-child {
-  border-bottom: 0;
-}
-
-.history-icon {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 13px;
+.history-card:hover {
   background: var(--bg-surface-elevated);
 }
 
-.history-icon.reward {
-  background: var(--bg-surface-elevated);
+.history-card:active {
+  transform: scale(0.99);
 }
 
-.history-main {
-  flex: 1;
+.history-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   min-width: 0;
 }
 
-.history-main strong {
-  display: block;
+.history-card__title {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.history-card__preview {
   font-size: 12px;
-}
-
-.history-main span {
-  display: block;
-  margin-top: 3px;
-  font-size: 10px;
   color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.history-value {
-  text-align: right;
-}
-
-.history-value strong {
-  display: block;
-  font-size: 12px;
-}
-
-.history-value span {
-  display: block;
-  margin-top: 3px;
-  font-size: 10px;
+.history-card__arrow {
+  flex: 0 0 auto;
+  font-size: 22px;
+  line-height: 1;
   color: var(--text-secondary);
-}
-
-.history-value.positive strong {
-  color: var(--success);
 }
 
 /* QR */
@@ -302,32 +363,34 @@ input:focus {
 .qr-button {
   position: fixed;
   left: 50%;
-  bottom: 18px;
+  bottom: 20px;
   transform: translateX(-50%);
   z-index: 1001;
   display: grid;
   place-items: center;
   overflow: hidden;
   height: 52px;
-  padding: 0 25px;
-  border: 0;
+  padding: 0 26px;
+  border: 1px solid var(--accent-surface-border);
   border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--accent-surface-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--accent-surface-text);
   font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 0 8px 28px var(--shadow-color);
+  box-shadow: var(--accent-surface-shadow);
   transition:
     width 0.3s ease,
     padding 0.3s ease,
     border-radius 0.3s ease,
-    background-color 0.3s ease;
+    background-color 0.2s ease;
 }
 
 :host-context([data-theme='dark']) .qr-button {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
@@ -362,10 +425,14 @@ input:focus {
 }
 
 .qr-button__x {
-  font-size: 26px;
-  line-height: 1;
   opacity: 0;
   transform: rotate(-90deg) scale(0.6);
+}
+
+.qr-button__x svg {
+  display: block;
+  width: 22px;
+  height: 22px;
 }
 
 /* Открытое состояние: круг + стекло (в обеих темах) + виден «×» */
@@ -396,14 +463,15 @@ input:focus {
 
 .qr-button--open .qr-button__x {
   opacity: 1;
-  transform: rotate(0) scale(2);
-  margin-right: 25px; /* визуально центрируем крестик в круге */
+  transform: rotate(0) scale(1);
 }
 
 /* ── Полноэкранный QR-экран ───────────────────────────────────────── */
 
 /* Стеклянный тёмный фон — ОДИНАКОВО в обеих темах: это отдельный
-   полноэкранный режим, он не следует палитре страницы. */
+   полноэкранный режим, он не следует палитре страницы.
+   «Капля»: экран раскрывается кругом (clip-path) из центра кнопки
+   «Мой QR» (--qr-x / --qr-y), при закрытии — втягивается обратно. */
 .qr-overlay {
   position: fixed;
   inset: 0;
@@ -411,7 +479,8 @@ input:focus {
   background: rgba(10, 10, 20, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  animation: qr-overlay-in 0.3s ease;
+  clip-path: circle(150% at var(--qr-x, 50%) var(--qr-y, 90%));
+  animation: qr-drip-in 0.36s ease;
 }
 
 .qr-dialog {
@@ -426,16 +495,17 @@ input:focus {
   gap: 22px;
   width: min(90vw, 340px);
   max-height: 90vh;
-  animation: qr-dialog-in 0.3s ease;
+  /* появляется чуть позже «капли», когда тёмный фон уже накрыл экран */
+  animation: qr-dialog-in 0.28s ease 0.12s both;
 }
 
 .qr-dialog__title {
   margin: 0;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
   color: #f5f5f7;
-  font-family: sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* Единственный непрозрачный элемент экрана — сплошной белый фон.
@@ -471,15 +541,16 @@ input:focus {
   color: #d92d20;
 }
 
-/* Стеклянная круглая кнопка закрытия в углу экрана */
+/* Стеклянная круглая кнопка закрытия в углу экрана.
+   Крестик — SVG (две линии), центрируется идеально, без «кривизны»
+   шрифтового символа ×. */
 .qr-close {
   position: fixed;
   top: 20px;
   right: 20px;
   z-index: 1003;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   width: 44px;
   height: 44px;
   padding: 0;
@@ -489,24 +560,33 @@ input:focus {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: #f5f5f7;
-  font-size: 24px;
-  line-height: 1;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.qr-close svg {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .qr-close:hover {
   background: rgba(255, 255, 255, 0.18);
 }
 
-@keyframes qr-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes qr-drip-in {
+  from {
+    clip-path: circle(0 at var(--qr-x, 50%) var(--qr-y, 90%));
+  }
+  to {
+    clip-path: circle(150% at var(--qr-x, 50%) var(--qr-y, 90%));
+  }
 }
 
 @keyframes qr-dialog-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.95);
+    transform: translate(-50%, -50%) scale(0.92);
   }
   to {
     opacity: 1;
@@ -514,9 +594,45 @@ input:focus {
   }
 }
 
+/* Плавное закрытие QR-экрана (animate.leave): фон «втягивается» обратно
+   в кнопку, кнопка × и диалог просто гаснут. */
+.qr-overlay.qr-leave {
+  animation: qr-drip-out 0.32s ease forwards;
+}
+
+.qr-close.qr-leave {
+  animation: qr-fade-out 0.2s ease forwards;
+}
+
+.qr-dialog.qr-dialog-leave {
+  animation: qr-dialog-out 0.2s ease forwards;
+}
+
+@keyframes qr-drip-out {
+  from {
+    clip-path: circle(150% at var(--qr-x, 50%) var(--qr-y, 90%));
+  }
+  to {
+    clip-path: circle(0 at var(--qr-x, 50%) var(--qr-y, 90%));
+  }
+}
+
+@keyframes qr-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes qr-dialog-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .qr-overlay,
-  .qr-dialog {
+  .qr-dialog,
+  .qr-overlay.qr-leave,
+  .qr-dialog.qr-dialog-leave {
     animation-duration: 0.01ms;
   }
 
@@ -585,7 +701,7 @@ input:focus {
 
 .promotion-progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--accent-strong);
   border-radius: 6px;
   transition: width .3s ease;
 }
@@ -619,35 +735,26 @@ input:focus {
 .review-form select,
 .review-form textarea {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 11px 12px;
   font-size: 14px;
   font-family: inherit;
   resize: vertical;
+  outline: none;
   background: var(--bg-surface);
   color: var(--text-primary);
+  transition: border-color 0.2s ease;
 }
 
+.review-form select:focus,
+.review-form textarea:focus {
+  border-color: var(--accent);
+}
+
+/* .review-form button — стиль в общем блоке кнопок дашборда сверху.
+   Здесь только высота, т.к. форма компактнее. */
 .review-form button {
-  height: 44px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--accent-text);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-:host-context([data-theme='dark']) .review-form button {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 4px 20px var(--shadow-color);
-  color: var(--text-primary);
+  margin-top: 2px;
 }
 
 .reviews-list {
@@ -790,12 +897,22 @@ input:focus {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
+/* Активная вкладка — стеклянно-зелёная в светлой теме,
+   плотно-зелёная в тёмной (через --accent-surface-* токены). */
 .menu-category-tab.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-text);
+  background: var(--accent-surface-hover);
+  border-color: var(--accent-surface-border);
+  color: var(--accent-surface-text);
+  font-weight: 600;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--accent-surface-shadow);
 }
 
 .menu-products {
@@ -919,8 +1036,7 @@ input:focus {
 
 /* Тёмная тема: тонкая рамка на карточках — отделяет от градиента фона */
 :host-context([data-theme='dark']) {
-  .wallet-card,
-  .history,
+  .history-card,
   .promotion-card,
   .review-form,
   .review-card,
@@ -930,18 +1046,36 @@ input:focus {
   .app-footer {
     border: 1px solid var(--border);
   }
+
+  /* В тёмной теме кнопки дашборда — нейтральное стекло (как кнопка входа),
+     а не зелёная заливка. Светлая тема остаётся стеклянно-зелёной. */
+  .store-controls button,
+  .review-form button {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+    color: var(--text-primary);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 4px 20px var(--shadow-color);
+  }
+
+  .store-controls button:hover,
+  .review-form button:hover {
+    background: var(--glass-hover);
+  }
 }
 
 /* FOOTER — как отдельная карточка, чтобы подпись была на фоне поверхности,
    а не на градиенте body */
 
 .app-footer {
-  margin-top: 20px;
-  padding: 14px;
+  margin-top: 24px;
+  padding: 15px;
   border-radius: 16px;
   background: var(--bg-surface);
   box-shadow: 0 6px 20px var(--shadow-color);
   text-align: center;
   font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--text-secondary);
 }

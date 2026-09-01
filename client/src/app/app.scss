@@ -1,100 +1,139 @@
 :host {
   display: block;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* Экран входа — обычный фон темы, фото сюда не ставим. */
+/* ── Экран входа ──────────────────────────────────────────────────────
+   Карточка входа лежит на тёмном фото (login-bg.png) + затемняющий слой,
+   поэтому её оформление НЕ зависит от темы: тёмное стекло, светлый текст,
+   стеклянно-зелёные кнопки — одинаково в светлой и тёмной теме. */
+
 .page {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 0;
   box-sizing: border-box;
+  overflow-x: hidden;
   background: var(--bg-page);
 }
 
-/* Фоновое фото — ВНУТРИ карточки. Поверх фото затемняющий слой
-   (.card::before), само фото не трогаем. Контент карточки поднят
-   над слоем через `.card > *` { z-index: 1 }. */
 .card {
   position: relative;
   z-index: 1;
-  overflow: hidden; /* обрезаем фото по скруглению карточки */
+  overflow: hidden;
   width: 100%;
-  max-width: 420px;
-  padding: 48px 40px;
-  background-color: var(--bg-surface); /* фолбэк, пока фото не загрузилось */
+  max-width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 26px;
+  background-color: #12261b; /* фолбэк, пока фото не загрузилось */
   background-image: url('/assets/images/login-bg.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  color: #f5f5f7;
-  border-radius: 24px;
-  box-shadow: 0 8px 30px var(--shadow-color);
+  color: #f2f5f2;
+  border-radius: 0;
   box-sizing: border-box;
-  text-align: center; /* единое выравнивание всего текста карточки по центру */
+  text-align: center;
+}
+
+/* Планшет / десктоп: карточка «в формате телефона», по центру, со скруглением */
+@media (min-width: 768px) {
+  .page {
+    padding: 32px;
+  }
+
+  .card {
+    min-height: auto;
+    max-width: 440px;
+    justify-content: flex-start;
+    padding: 52px 44px;
+    border-radius: 28px;
+    box-shadow: 0 24px 70px rgba(10, 20, 14, 0.4);
+  }
 }
 
 .card::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(10, 10, 20, 0.55);
+  background: rgba(10, 16, 12, 0.58);
   z-index: 0;
 }
 
 .card > * {
   position: relative;
   z-index: 1;
-}
-
-:host-context([data-theme='dark']) .card {
-  border: 1px solid var(--border);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* язык слева, переключатель темы справа */
-  gap: 10px;
-  margin-bottom: 12px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 28px;
 }
 
-/* Текст поверх фото/затемнения — всегда светлый, в обеих темах */
 h1 {
-  margin: 0;
-  font-size: 32px;
-  line-height: 1.1;
+  margin: 0 0 40px;
+  font-size: 34px;
+  line-height: 1.05;
   color: #ffffff;
-}
-
-.subtitle {
-  margin: 6px 0 42px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 16px;
 }
 
 h2 {
   margin: 0 0 12px;
-  font-size: 26px;
+  font-size: 25px;
   color: #ffffff;
 }
 
 .description {
-  margin: 0 0 28px;
-  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 26px;
+  min-height: 2.6em;
+  color: rgba(255, 255, 255, 0.78);
   line-height: 1.5;
+  font-size: 15px;
 }
 
-/* Единый вертикальный ритм формы: gap на контейнере расставляет ОДИНАКОВЫЙ
-   зазор между всеми полями и кнопками. Раньше зазор держал margin-bottom
-   у каждого input — с овальной формой (999px) 12px визуально «слипались»,
-   поэтому переносим на gap контейнера и слегка увеличиваем. */
+/* ── Плавная смена «email → код»: обе формы всегда в DOM, свёрнутая
+   схлопнута через grid-template-rows 0fr→1fr (это анимируется). ── */
+.login {
+  min-width: 0;
+}
+
+.login .form-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  grid-template-columns: minmax(0, 1fr); /* колонка = ширине контейнера, без раздувания */
+  opacity: 0;
+  transition:
+    grid-template-rows 0.34s ease,
+    opacity 0.28s ease;
+}
+
+.login .form-slot.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.login .form-slot__inner {
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
 .login form {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding-top: 2px; /* чтобы тень поля не срезалась overflow:hidden */
 }
 
 input {
@@ -102,80 +141,155 @@ input {
   height: 52px;
   padding: 0 20px;
   box-sizing: border-box;
-  border: 1px solid var(--border);
-  border-radius: 999px; /* овальные поля */
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
   outline: none;
   font-size: 16px;
-  background: var(--bg-surface);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: #f5f5f7;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
 }
 
 input:focus {
-  border-color: var(--accent);
+  border-color: rgba(122, 178, 142, 0.9);
+  background: rgba(255, 255, 255, 0.14);
 }
 
+/* Кнопки на карточке входа — стеклянно-зелёные, читаемые на тёмном фото */
 button {
   width: 100%;
   height: 52px;
-  border: 0;
-  border-radius: 999px; /* овальные кнопки в тон полям */
-  background: var(--accent);
-  color: var(--accent-text);
+  border: 1px solid rgba(69, 128, 90, 0.55);
+  border-radius: 999px;
+  background: rgba(45, 90, 61, 0.42);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 6px 22px rgba(45, 90, 61, 0.3);
+  color: #f1f6f2;
   font-size: 16px;
   font-weight: 600;
+  letter-spacing: 0.02em;
   cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.08s ease;
 }
 
 button:hover {
-  background: var(--accent-hover);
+  background: rgba(45, 90, 61, 0.56);
 }
 
-/* Стеклянные кнопки — эффект хорошо виден в тёмной теме */
-:host-context([data-theme='dark']) button {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 4px 20px var(--shadow-color);
-  color: var(--text-primary);
+button:active {
+  transform: scale(0.985);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* «Изменить email» — тихая текстовая кнопка, без стрелки, без пилюли */
+.link-button {
+  height: 40px;
+  margin-top: 2px;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.link-button:hover {
+  background: transparent;
+  color: #ffffff;
 }
 
 .error {
-  margin: 16px 0 0;
-  color: var(--danger);
+  margin: 18px 0 0;
+  color: #ff9a90;
   font-size: 14px;
   line-height: 1.4;
 }
 
-.dev-code {
-  margin: 0 0 16px;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--warning-bg);
-  color: var(--warning);
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.change-phone {
-  margin-top: 12px;
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
-
-.change-phone:hover {
-  background: var(--bg-page);
-}
-
-/* Подпись — последний элемент внутри карточки, поверх фото */
 .app-footer {
-  margin-top: 28px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  margin-top: 34px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
   text-align: center;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Экран приветствия (~2.5 c после входа) ─────────────────────────── */
+
+.greeting {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  text-align: center;
+  background: var(--bg-page);
+  animation: greeting-in 0.5s ease both;
+}
+
+:root[data-theme='dark'] .greeting {
+  background: radial-gradient(circle at 30% 0%, #234030 0%, #0f1f17 62%);
+}
+
+.greeting.greeting-leave {
+  animation: greeting-out 0.45s ease both;
+}
+
+.greeting__text {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(30px, 8vw, 46px);
+  line-height: 1.15;
+  letter-spacing: 0.004em;
+  color: var(--text-primary);
+}
+
+.greeting__name {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+:root[data-theme='dark'] .greeting__name {
+  color: #86d4a2; /* светлее --accent — читаемо на тёмном фоне */
+}
+
+@keyframes greeting-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes greeting-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.02); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .greeting,
+  .greeting.greeting-leave {
+    animation-duration: 0.01ms;
+  }
 }

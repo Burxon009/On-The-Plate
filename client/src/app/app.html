@@ -8,7 +8,6 @@
     </div>
 
     <h1>On the plate</h1>
-    <p class="subtitle">{{ lang.t('subtitle') }}</p>
 
     <section class="login">
       <h2>{{ lang.t('loginTitle') }}</h2>
@@ -17,72 +16,78 @@
         {{ codeRequested() ? lang.t('loginCodePrompt') : lang.t('loginPrompt') }}
       </p>
 
-      @if (!codeRequested()) {
-      <form (ngSubmit)="login()">
+      <div class="form-slot" [class.is-open]="!codeRequested()" [attr.inert]="codeRequested() ? '' : null">
+        <div class="form-slot__inner">
+          <form (ngSubmit)="login()">
 
-        <input
-          type="email"
-          name="email"
-          [ngModel]="email()"
-          (ngModelChange)="email.set($event)"
-          placeholder="you@example.com"
-          autocomplete="email"
-          required
-        />
+            <input
+              type="email"
+              name="email"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+              placeholder="you@example.com"
+              autocomplete="email"
+              required
+            />
 
-        <button
-          type="submit"
-          [disabled]="loading()"
-        >
-          {{ loading() ? lang.t('loginContinueLoading') : lang.t('loginContinue') }}
-        </button>
+            <button
+              type="submit"
+              [disabled]="loading()"
+            >
+              {{ loading() ? lang.t('loginContinueLoading') : lang.t('loginContinue') }}
+            </button>
 
-      </form>
-      } @else {
-      <form (ngSubmit)="verifyCode()">
+          </form>
+        </div>
+      </div>
 
-        <input
-          type="text"
-          name="code"
-          [ngModel]="code()"
-          (ngModelChange)="code.set($event)"
-          placeholder="123456"
-          inputmode="numeric"
-          maxlength="6"
-          autocomplete="one-time-code"
-          required
-        />
+      <div class="form-slot" [class.is-open]="codeRequested()" [attr.inert]="codeRequested() ? null : ''">
+        <div class="form-slot__inner">
+          <form (ngSubmit)="verifyCode()">
 
-        <input
-          type="text"
-          name="name"
-          [ngModel]="name()"
-          (ngModelChange)="name.set($event)"
-          [placeholder]="lang.t('loginNamePlaceholder')"
-          autocomplete="name"
-          required
-        />
+            <input
+              type="text"
+              name="code"
+              [ngModel]="code()"
+              (ngModelChange)="code.set($event)"
+              placeholder="123456"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="one-time-code"
+              required
+            />
 
-        <button
-          type="submit"
-          [disabled]="loading()"
-        >
-          {{ loading() ? lang.t('loginConfirmLoading') : lang.t('loginConfirmCode') }}
-        </button>
+            <input
+              type="text"
+              name="name"
+              [ngModel]="name()"
+              (ngModelChange)="name.set($event)"
+              [placeholder]="lang.t('loginNamePlaceholder')"
+              autocomplete="name"
+              required
+            />
 
-        <button
-          type="button"
-          class="link-button"
-          (click)="changeEmail()"
-        >
-          {{ lang.t('loginChangeEmail') }}
-        </button>
+            <button
+              type="submit"
+              [disabled]="loading()"
+            >
+              {{ loading() ? lang.t('loginConfirmLoading') : lang.t('loginConfirmCode') }}
+            </button>
 
-      </form>
-      }
+            <button
+              type="button"
+              class="link-button"
+              (click)="changeEmail()"
+            >
+              {{ lang.t('loginChangeEmail') }}
+            </button>
+
+          </form>
+        </div>
+      </div>
 
       @if (error()) {
-        <p class="error">{{ error() }}</p>
+        <p class="error" animate.enter="app-enter" animate.leave="app-leave">{{ error() }}</p>
       }
 
     </section>
@@ -93,4 +98,16 @@
 </div>
 } @else {
   <router-outlet></router-outlet>
+}
+
+@if (showGreeting()) {
+  <div class="greeting" animate.leave="greeting-leave">
+    <p class="greeting__text">
+      @if (greetingName()) {
+        {{ greetingText() }}, <span class="greeting__name">{{ greetingName() }}</span>!
+      } @else {
+        {{ greetingText() }}!
+      }
+    </p>
+  </div>
 }

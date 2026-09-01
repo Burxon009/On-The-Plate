@@ -6,6 +6,7 @@ import { finalize, timeout } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 import { LanguageService } from './services/language.service';
+import type { TranslationKey } from './i18n/translations';
 import { ThemeToggle } from './components/theme-toggle/theme-toggle';
 import { LanguageSwitcher } from './components/language-switcher/language-switcher';
 
@@ -36,6 +37,21 @@ export class App {
   codeRequested = signal(false);
   loading = signal(false);
   error = signal('');
+
+  // Экран приветствия (~2.5 c после успешного входа).
+  readonly showGreeting = signal(false);
+  readonly greetingName = signal('');
+
+  /** Приветствие по времени суток, на выбранном языке. */
+  greetingText(): string {
+    const h = new Date().getHours();
+    const key: TranslationKey =
+      h >= 5 && h < 12 ? 'greetingMorning'
+      : h >= 12 && h < 18 ? 'greetingDay'
+      : h >= 18 && h < 23 ? 'greetingEvening'
+      : 'greetingNight';
+    return this.lang.t(key);
+  }
 
   constructor(
     private readonly auth: AuthService,
@@ -112,10 +128,16 @@ export class App {
         this.loading.set(false);
       }),
     ).subscribe({
-      next: () => {
+      next: (session) => {
         this.verificationEmail = '';
         this.name.set('');
+        // Имя для приветствия — из СВЕЖЕГО ответа verify-code (актуальное
+        // из БД на этот момент, с учётом смены имени через профиль),
+        // а не из закэшированного значения.
+        this.greetingName.set((session.user?.name ?? '').trim());
+        this.showGreeting.set(true);
         void this.router.navigate(['/dashboard']);
+        setTimeout(() => this.showGreeting.set(false), 2500);
       },
       error: (error) => {
         this.error.set(

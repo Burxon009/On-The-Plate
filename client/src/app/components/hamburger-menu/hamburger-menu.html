@@ -12,7 +12,7 @@
 @if (open()) {
   <div class="hm-scrim" role="presentation" (click)="close()"></div>
 
-  <div class="hm-panel" role="menu">
+  <div class="hm-panel" role="menu" animate.leave="hm-leave">
     <div class="hm-row">
       <span class="hm-row-label">{{ lang.t('menuTheme') }}</span>
       <app-theme-toggle />

@@ -1,0 +1,194 @@
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: block;
+}
+
+:host(.th-leave) {
+  animation: th-host-out 0.28s ease forwards;
+}
+
+/* стеклянный тёмный фон — как у QR-экрана, одинаково в обеих темах */
+.th-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 16, 12, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: th-fade 0.28s ease;
+}
+
+.th-panel {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  background: var(--bg-page);
+  animation: th-slide 0.32s ease;
+}
+
+@media (min-width: 768px) {
+  .th-panel {
+    inset: 24px auto;
+    top: 5vh;
+    bottom: 5vh;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 30px 80px var(--shadow-color);
+  }
+}
+
+.th-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.th-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.th-back {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.th-back:hover {
+  background: var(--glass-hover);
+}
+
+.th-back svg {
+  width: 20px;
+  height: 20px;
+}
+
+.th-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 18px 32px;
+}
+
+.th-status {
+  margin: 24px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.th-status--error {
+  color: var(--danger);
+}
+
+.th-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.th-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 15px 16px;
+  border-radius: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 16px var(--shadow-color);
+}
+
+.th-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.th-item__main strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.th-item__date {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.th-item__desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.th-item__amounts {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+}
+
+.th-item__amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.th-item--spend .th-item__amount {
+  color: var(--text-primary);
+}
+
+.th-item__balance {
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+@keyframes th-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes th-slide {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes th-host-out {
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .th-overlay,
+  .th-panel,
+  :host(.th-leave) {
+    animation-duration: 0.01ms;
+  }
+}

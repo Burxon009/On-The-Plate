@@ -5,8 +5,10 @@ import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../../api.config';
 import { AuthService } from '../../services/auth.service';
 import { LanguageService } from '../../services/language.service';
+import type { TranslationKey } from '../../i18n/translations';
 import { HamburgerMenu } from '../../components/hamburger-menu/hamburger-menu';
 import { ProfileSettings } from '../../components/profile-settings/profile-settings';
+import { TransactionHistory } from '../../components/transaction-history/transaction-history';
 
 interface Store {
   id: number;
@@ -89,7 +91,7 @@ interface StoreMessage {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [DecimalPipe, DatePipe, FormsModule, HamburgerMenu, ProfileSettings],
+  imports: [DecimalPipe, DatePipe, FormsModule, HamburgerMenu, ProfileSettings, TransactionHistory],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -106,6 +108,9 @@ export class Dashboard implements OnInit, OnDestroy {
   qrImageUrl = signal<string | null>(null);
   showQr = signal(false);
   showProfile = signal(false);
+
+  /** Полноэкранный экран «История операций». */
+  showHistoryScreen = signal(false);
 
   readonly lang = inject(LanguageService);
   loadingStores = signal(true);
@@ -188,7 +193,7 @@ export class Dashboard implements OnInit, OnDestroy {
         this.loadingStores.set(false);
       },
       error: (error) => {
-        this.storeError.set(error.error?.message || 'Не удалось загрузить магазины');
+        this.storeError.set(error.error?.message || this.lang.t('storesLoadFailed'));
         this.loadingStores.set(false);
       },
     });
@@ -222,10 +227,18 @@ export class Dashboard implements OnInit, OnDestroy {
     this.selectStore(this.stores().find((store) => store.id === Number(storeId)) ?? null);
   }
 
+  /** Локализуем известные ответы бэкенда при добавлении магазина по коду
+   *  статуса (409 — уже добавлен, 404 — не найден); иначе — текст сервера. */
+  private joinErrorMessage(error: { status?: number; error?: { message?: string } }): string {
+    if (error.status === 409) return this.lang.t('storeAlreadyAdded');
+    if (error.status === 404) return this.lang.t('storeNotFound');
+    return error.error?.message || this.lang.t('storeJoinFailed');
+  }
+
   joinStore(): void {
     const storeId = Number(this.storeIdInput());
     if (!Number.isInteger(storeId) || storeId <= 0) {
-      this.storeError.set('Введите корректный ID магазина');
+      this.storeError.set(this.lang.t('storeIdInvalid'));
       return;
     }
 
@@ -238,7 +251,7 @@ export class Dashboard implements OnInit, OnDestroy {
         this.loadStores();
       },
       error: (error) => {
-        this.storeError.set(error.error?.message || 'Не удалось добавить магазин');
+        this.storeError.set(this.joinErrorMessage(error));
         this.joiningStore.set(false);
       },
     });
@@ -258,7 +271,7 @@ export class Dashboard implements OnInit, OnDestroy {
         this.loadingQr.set(false);
       },
       error: () => {
-        this.qrError.set('Не удалось загрузить QR-код');
+        this.qrError.set(this.lang.t('qrLoadFailed'));
         this.loadingQr.set(false);
       },
     });
@@ -268,20 +281,50 @@ export class Dashboard implements OnInit, OnDestroy {
     this.showQr.set(false);
   }
 
+  /** Точка, из которой «вытекает» QR-экран — центр кнопки «Мой QR». */
+  readonly qrOriginX = signal('50%');
+  readonly qrOriginY = signal('90%');
+
   /**
    * Одна кнопка «Мой QR» и открывает, и закрывает полноэкранный QR —
    * её вид (иконка+текст ↔ крестик) переключается по showQr() в шаблоне.
+   * При открытии запоминаем позицию кнопки — QR-экран раскрывается
+   * «каплей» из неё (clip-path circle с центром в этой точке).
    */
-  toggleQr(): void {
+  toggleQr(event?: Event): void {
     if (this.showQr()) {
       this.closeQr();
-    } else {
-      this.openQr();
+      return;
     }
+    const btn = event?.currentTarget as HTMLElement | undefined;
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      this.qrOriginX.set(`${Math.round(r.left + r.width / 2)}px`);
+      this.qrOriginY.set(`${Math.round(r.top + r.height / 2)}px`);
+    }
+    this.openQr();
   }
 
   logout(): void {
     this.auth.logout();
+  }
+
+  /** Открыть полноэкранный экран истории операций. */
+  openHistoryScreen(): void {
+    if (this.selectedStore()) {
+      this.showHistoryScreen.set(true);
+    }
+  }
+
+  /** Локализованная подпись типа операции (для превью в карточке). */
+  transactionTypeLabel(transaction: Transaction): string {
+    const key: TranslationKey =
+      transaction.type === 'spend'
+        ? 'txSpend'
+        : transaction.type === 'cashback'
+          ? 'txCashback'
+          : 'txAdjustment';
+    return this.lang.t(key);
   }
 
   userLabel(): string {
@@ -318,7 +361,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
     const rating = this.reviewRatingInput();
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      this.reviewSubmitError.set('Выберите оценку от 1 до 5');
+      this.reviewSubmitError.set(this.lang.t('reviewRatingRange'));
       return;
     }
 
@@ -343,7 +386,7 @@ export class Dashboard implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.submittingReview.set(false);
-          this.reviewSubmitError.set(error.error?.message || 'Не удалось отправить отзыв');
+          this.reviewSubmitError.set(error.error?.message || this.lang.t('reviewSubmitFailed'));
         },
       });
   }
@@ -362,7 +405,7 @@ export class Dashboard implements OnInit, OnDestroy {
     this.http.get<{ wallet: Wallet }>(`${this.apiUrl}/wallet/${storeId}`).subscribe({
       next: ({ wallet }) => {
         if (wallet.store_id !== storeId) {
-          this.error.set('Сервер вернул кошелёк другого магазина');
+          this.error.set(this.lang.t('walletWrongStore'));
           this.loadingStoreData.set(false);
           return;
         }
@@ -370,7 +413,7 @@ export class Dashboard implements OnInit, OnDestroy {
         this.loadTransactions(storeId);
       },
       error: (error) => {
-        this.error.set(error.error?.message || 'Не удалось загрузить баланс');
+        this.error.set(error.error?.message || this.lang.t('walletLoadFailed'));
         this.loadingStoreData.set(false);
       },
     });
@@ -385,7 +428,7 @@ export class Dashboard implements OnInit, OnDestroy {
           this.loadingStoreData.set(false);
         },
         error: (error) => {
-          this.error.set(error.error?.message || 'Не удалось загрузить историю операций');
+          this.error.set(error.error?.message || this.lang.t('historyLoadError'));
           this.loadingStoreData.set(false);
         },
       });
@@ -411,7 +454,7 @@ export class Dashboard implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          this.promotionsError.set(error.error?.message || 'Не удалось загрузить акции');
+          this.promotionsError.set(error.error?.message || this.lang.t('promoLoadFailed'));
           this.loadingPromotions.set(false);
           // Если акции не загрузились — всё равно показываем отзывы,
           // чтобы блок не был пустым.
@@ -434,7 +477,7 @@ export class Dashboard implements OnInit, OnDestroy {
           this.loadingReviews.set(false);
         },
         error: (error) => {
-          this.reviewsError.set(error.error?.message || 'Не удалось загрузить отзывы');
+          this.reviewsError.set(error.error?.message || this.lang.t('reviewsLoadFailed'));
           this.loadingReviews.set(false);
         },
       });
@@ -462,7 +505,7 @@ export class Dashboard implements OnInit, OnDestroy {
           this.loadingRewards.set(false);
         },
         error: (error) => {
-          this.rewardsError.set(error.error?.message || 'Не удалось загрузить награды');
+          this.rewardsError.set(error.error?.message || this.lang.t('rewardsLoadFailed'));
           this.loadingRewards.set(false);
         },
       });
@@ -507,7 +550,7 @@ export class Dashboard implements OnInit, OnDestroy {
           this.loadingMenu.set(false);
         },
         error: (error) => {
-          this.menuError.set(error.error?.message || 'Не удалось загрузить меню');
+          this.menuError.set(error.error?.message || this.lang.t('menuLoadFailed'));
           this.loadingMenu.set(false);
         },
       });
@@ -581,7 +624,7 @@ export class Dashboard implements OnInit, OnDestroy {
           this.loadingMessages.set(false);
         },
         error: (error) => {
-          this.messagesError.set(error.error?.message || 'Не удалось загрузить сообщения');
+          this.messagesError.set(error.error?.message || this.lang.t('messagesLoadFailed'));
           this.loadingMessages.set(false);
         },
       });

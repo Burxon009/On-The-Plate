@@ -1,0 +1,43 @@
+<div class="th-overlay" role="presentation" (click)="close()"></div>
+
+<section class="th-panel" role="dialog" aria-modal="true" aria-labelledby="th-title">
+  <header class="th-header">
+    <button class="th-back" type="button" [attr.aria-label]="lang.t('back')" (click)="close()">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+    <h2 id="th-title">{{ lang.t('blockHistory') }}</h2>
+  </header>
+
+  <div class="th-body">
+    @if (loading()) {
+      <p class="th-status">{{ lang.t('historyLoading') }}</p>
+    } @else if (error()) {
+      <p class="th-status th-status--error">{{ error() }}</p>
+    } @else if (transactions().length === 0) {
+      <p class="th-status">{{ lang.t('historyEmpty') }}</p>
+    } @else {
+      <ul class="th-list">
+        @for (t of transactions(); track t.id) {
+          <li class="th-item" [class.th-item--spend]="t.type === 'spend'">
+            <div class="th-item__main">
+              <strong>{{ typeLabel(t) }}</strong>
+              <span class="th-item__date">{{ t.created_at | date:'dd.MM.yyyy HH:mm' }}</span>
+              @if (t.description) {
+                <span class="th-item__desc">{{ t.description }}</span>
+              }
+            </div>
+            <div class="th-item__amounts">
+              <strong class="th-item__amount">{{ sign(t) }}{{ t.amount | number }}</strong>
+              <span class="th-item__balance">
+                {{ lang.t('txBalanceAfter') }}: {{ t.balance_after | number }}
+              </span>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

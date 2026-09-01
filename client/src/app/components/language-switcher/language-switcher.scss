@@ -9,8 +9,8 @@
   border-radius: 999px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .lang {
@@ -30,9 +30,11 @@
     color 0.2s ease;
 }
 
+/* активный язык — стеклянно-зелёный в светлой теме, плотный в тёмной */
 .lang.active {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--accent-surface-bg);
+  border: 1px solid var(--accent-surface-border);
+  color: var(--accent-surface-text);
 }
 
 .lang:not(.active):hover {

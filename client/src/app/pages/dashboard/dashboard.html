@@ -9,7 +9,7 @@
         }
       </div>
       <div>
-        <div class="store-label">ПРОГРАММА ЛОЯЛЬНОСТИ</div>
+        <div class="store-label">{{ lang.t("loyaltyProgram") }}</div>
         <h1>{{ userLabel() }}</h1>
       </div>
     </div>
@@ -24,12 +24,12 @@
     </div>
 
     @if (loadingStores()) {
-      <p>Загрузка магазинов...</p>
+      <p>{{ lang.t("storesLoading") }}</p>
     } @else if (stores().length === 0) {
-      <p>Подключённых магазинов пока нет.</p>
+      <p>{{ lang.t("storesEmpty") }}</p>
     } @else {
       <label>
-        Выбранный магазин
+        {{ lang.t("storeSelected") }}
         <select [ngModel]="selectedStore()?.id" (ngModelChange)="selectStoreById($event)">
           @for (store of stores(); track store.id) {
             <option [ngValue]="store.id">{{ store.name }}</option>
@@ -40,7 +40,7 @@
 
     <form (ngSubmit)="joinStore()">
       <label>
-        ID магазина
+        {{ lang.t("storeIdField") }}
         <input
           type="number"
           name="storeId"
@@ -51,7 +51,7 @@
         />
       </label>
       <button type="submit" [disabled]="joiningStore()">
-        {{ joiningStore() ? 'Добавление...' : 'Добавить магазин' }}
+        {{ joiningStore() ? lang.t("storeAdding") : lang.t("storeAdd") }}
       </button>
     </form>
 
@@ -76,21 +76,23 @@
       </div>
 
       @if (loadingStoreData()) {
-        <div class="balance">Загрузка...</div>
+        <div class="balance">{{ lang.t("walletLoading") }}</div>
       } @else if (wallet(); as wallet) {
-        <div class="balance">{{ wallet.balance | number }} <small>бонусов</small></div>
+        <div class="balance">{{ wallet.balance | number }} <small>{{ lang.t("walletBonuses") }}</small></div>
       } @else {
-        <div class="balance">Баланс недоступен</div>
+        <div class="balance">{{ lang.t("walletUnavailable") }}</div>
       }
 
       <div class="wallet-info">
         <div>
-          <span>Cashback</span>
+          <span>{{ lang.t('walletCashback') }}</span>
           <strong>{{ store.cashback_percent }}%</strong>
         </div>
         <div>
-          <span>Покупки</span>
-          <strong>См. историю операций</strong>
+          <span>{{ lang.t('walletPurchases') }}</span>
+          <button type="button" class="wallet-link" (click)="openHistoryScreen()">
+            {{ lang.t('walletSeeHistory') }}
+          </button>
         </div>
       </div>
     </section>
@@ -106,7 +108,7 @@
     >
       @if (loadingPromotions()) {
         <div class="section-title"><h2>{{ lang.t('blockPromotions') }}</h2></div>
-        <p>Загрузка акций...</p>
+        <p>{{ lang.t("promoLoading") }}</p>
       } @else if (promotions().length > 0) {
         <div class="section-title"><h2>{{ lang.t('blockPromotions') }}</h2></div>
         @if (promotionsError()) {
@@ -128,7 +130,7 @@
                   [style.width.%]="promotionProgressPercent(promotion)"
                 ></div>
               </div>
-              <span class="promotion-reward">Награда: {{ promotion.reward_title }}</span>
+              <span class="promotion-reward">{{ lang.t("promoRewardPrefix") }}: {{ promotion.reward_title }}</span>
             </div>
           }
         </div>
@@ -137,41 +139,41 @@
         <div class="section-title"><h2>{{ lang.t('blockReviews') }}</h2></div>
 
         @if (loadingReviews()) {
-          <p>Загрузка отзывов...</p>
+          <p>{{ lang.t("reviewsLoading") }}</p>
         } @else {
           <form class="review-form" (ngSubmit)="submitReview()">
             <label>
-              Ваша оценка
+              {{ lang.t("reviewYourRating") }}
               <select
                 name="rating"
                 [ngModel]="reviewRatingInput()"
                 (ngModelChange)="reviewRatingInput.set($event)"
               >
-                <option [ngValue]="5">5 — Отлично</option>
-                <option [ngValue]="4">4 — Хорошо</option>
-                <option [ngValue]="3">3 — Нормально</option>
-                <option [ngValue]="2">2 — Плохо</option>
-                <option [ngValue]="1">1 — Ужасно</option>
+                <option [ngValue]="5">5 — {{ lang.t("reviewRating5") }}</option>
+                <option [ngValue]="4">4 — {{ lang.t("reviewRating4") }}</option>
+                <option [ngValue]="3">3 — {{ lang.t("reviewRating3") }}</option>
+                <option [ngValue]="2">2 — {{ lang.t("reviewRating2") }}</option>
+                <option [ngValue]="1">1 — {{ lang.t("reviewRating1") }}</option>
               </select>
             </label>
 
             <label>
-              Комментарий (необязательно)
+              {{ lang.t("reviewCommentLabel") }}
               <textarea
                 name="comment"
                 [ngModel]="reviewCommentInput()"
                 (ngModelChange)="reviewCommentInput.set($event)"
                 rows="3"
-                placeholder="Расскажите, как вам у нас..."
+                [placeholder]="lang.t('reviewCommentPlaceholder')"
               ></textarea>
             </label>
 
             <button type="submit" [disabled]="submittingReview()">
-              {{ submittingReview() ? 'Отправка...' : 'Оставить отзыв' }}
+              {{ submittingReview() ? lang.t("reviewSubmitting") : lang.t("reviewSubmit") }}
             </button>
 
             @if (reviewSubmitSuccess()) {
-              <p class="success">Спасибо за отзыв! ✅</p>
+              <p class="success">{{ lang.t("reviewThanks") }}</p>
             }
             @if (reviewSubmitError()) {
               <p class="error">{{ reviewSubmitError() }}</p>
@@ -181,13 +183,13 @@
           @if (reviewsError()) {
             <p class="error">{{ reviewsError() }}</p>
           } @else if (reviews().length === 0) {
-            <p>Пока отзывов нет — станьте первым!</p>
+            <p>{{ lang.t("reviewsEmpty") }}</p>
           } @else {
             <div class="reviews-list">
               @for (review of reviews(); track review.id) {
                 <div class="review-card">
                   <div class="review-header">
-                    <strong>{{ review.author_name || 'Клиент' }}</strong>
+                    <strong>{{ review.author_name || lang.t("clientFallback") }}</strong>
                     <span class="review-rating">{{ review.rating }} ★</span>
                   </div>
                   @if (review.comment) {
@@ -209,12 +211,12 @@
       <div class="section-title"><h2>{{ lang.t('blockRewards') }}</h2></div>
 
       @if (loadingRewards()) {
-        <p>Загрузка наград...</p>
+        <p>{{ lang.t("rewardsLoading") }}</p>
       } @else if (rewardsError()) {
         <p class="error">{{ rewardsError() }}</p>
       } @else {
         @if (availableRewards().length === 0 && redeemedRewards().length === 0) {
-          <p>Пока наград нет — они появятся, как только вы выполните условия акции.</p>
+          <p>{{ lang.t("rewardsEmpty") }}</p>
         } @else {
           @if (availableRewards().length > 0) {
             <div class="rewards-list">
@@ -223,7 +225,7 @@
                   <span class="reward-icon">🎁</span>
                   <div class="reward-body">
                     <strong>{{ reward.title }}</strong>
-                    <span>Покажите эту награду на кассе</span>
+                    <span>{{ lang.t("rewardShowAtCounter") }}</span>
                   </div>
                 </div>
               }
@@ -232,7 +234,7 @@
 
           @if (redeemedRewards().length > 0) {
             <details class="redeemed-rewards">
-              <summary>Использованные награды ({{ redeemedRewards().length }})</summary>
+              <summary>{{ lang.t("rewardsUsedTitle") }} ({{ redeemedRewards().length }})</summary>
               <div class="rewards-list">
                 @for (reward of redeemedRewards(); track reward.id) {
                   <div class="reward-card redeemed">
@@ -240,7 +242,7 @@
                     <div class="reward-body">
                       <strong>{{ reward.title }}</strong>
                       @if (reward.redeemed_at) {
-                        <span>Использовано {{ reward.redeemed_at | date:'dd.MM.yyyy' }}</span>
+                        <span>{{ lang.t("rewardUsedPrefix") }} {{ reward.redeemed_at | date:'dd.MM.yyyy' }}</span>
                       }
                     </div>
                   </div>
@@ -259,11 +261,11 @@
       <div class="section-title"><h2>{{ lang.t('blockMenu') }}</h2></div>
 
       @if (loadingMenu()) {
-        <p>Загрузка меню...</p>
+        <p>{{ lang.t("menuLoading") }}</p>
       } @else if (menuError()) {
         <p class="error">{{ menuError() }}</p>
       } @else if (menuCategories().length === 0) {
-        <p>Меню магазина пока недоступно.</p>
+        <p>{{ lang.t("menuUnavailable") }}</p>
       } @else {
         <div class="menu-categories">
           @for (category of menuCategories(); track category.id) {
@@ -279,7 +281,7 @@
         </div>
 
         @if (productsInSelectedCategory().length === 0) {
-          <p>В этой категории пока нет товаров.</p>
+          <p>{{ lang.t("menuCategoryEmpty") }}</p>
         } @else {
           <div class="menu-products">
             @for (product of productsInSelectedCategory(); track product.id) {
@@ -293,9 +295,9 @@
                     <span class="menu-product-description">{{ product.description }}</span>
                   }
                   <div class="menu-product-footer">
-                    <span class="menu-product-price">{{ product.price | number }} сум</span>
+                    <span class="menu-product-price">{{ product.price | number }} {{ lang.t("menuCurrency") }}</span>
                     @if (estimatedProductCashback(product) > 0) {
-                      <span class="menu-product-cashback">+{{ estimatedProductCashback(product) | number }} кэшбэк</span>
+                      <span class="menu-product-cashback">+{{ estimatedProductCashback(product) | number }} {{ lang.t("menuCashbackSuffix") }}</span>
                     }
                   </div>
                 </div>
@@ -306,30 +308,24 @@
       }
     </section>
 
-    <section class="section"
+    <section class="section" id="history-section"
       [style.order]="blockOrder('history')"
       [hidden]="!blockVisible('history')"
     >
-      <div class="section-title"><h2>{{ lang.t('blockHistory') }}</h2></div>
-      @if (loadingStoreData()) {
-        <p>Загрузка истории...</p>
-      } @else if (transactions().length === 0) {
-        <p>Операций пока нет.</p>
-      } @else {
-        <div class="history">
-          @for (transaction of transactions(); track transaction.id) {
-            <div class="history-item">
-              <div class="history-main">
-                <strong>{{ transaction.description || transaction.type }}</strong>
-                <span>{{ transaction.created_at | date:'dd.MM.yyyy HH:mm' }}</span>
-              </div>
-              <div class="history-value">
-                <strong>{{ transactionSign(transaction) }}{{ transaction.amount | number }}</strong>
-              </div>
-            </div>
+      <button type="button" class="history-card" (click)="openHistoryScreen()">
+        <span class="history-card__body">
+          <span class="history-card__title">{{ lang.t('blockHistory') }}</span>
+          @if (transactions().length > 0) {
+            <span class="history-card__preview">
+              {{ transactionSign(transactions()[0]) }}{{ transactions()[0].amount | number }}
+              · {{ transactions()[0].description || transactionTypeLabel(transactions()[0]) }}
+            </span>
+          } @else {
+            <span class="history-card__preview">{{ lang.t('historyEmpty') }}</span>
           }
-        </div>
-      }
+        </span>
+        <span class="history-card__arrow" aria-hidden="true">›</span>
+      </button>
     </section>
 
     <section class="section client-block"
@@ -344,11 +340,11 @@
       </div>
 
       @if (loadingMessages()) {
-        <p>Загрузка сообщений...</p>
+        <p>{{ lang.t("messagesLoading") }}</p>
       } @else if (messagesError()) {
         <p class="error">{{ messagesError() }}</p>
       } @else if (messages().length === 0) {
-        <p>Сообщений от магазина пока нет.</p>
+        <p>{{ lang.t("messagesEmpty") }}</p>
       } @else {
         <div class="messages-list">
           @for (message of messages(); track message.id) {
@@ -368,7 +364,7 @@
 
     <section class="section client-block">
       <div class="section-title"><h2>{{ lang.t('blockNews') }}</h2></div>
-      <p>Новинок пока нет.</p>
+      <p>{{ lang.t("newsEmpty") }}</p>
     </section>
   }
 
@@ -376,15 +372,20 @@
     class="qr-button"
     [class.qr-button--open]="showQr()"
     type="button"
-    [attr.aria-label]="showQr() ? 'Закрыть QR-код' : 'Показать мой QR-код'"
+    [attr.aria-label]="showQr() ? lang.t('qrCloseLabel') : lang.t('qrOpenLabel')"
     [attr.aria-expanded]="showQr()"
-    (click)="toggleQr()"
+    (click)="toggleQr($event)"
   >
     <span class="qr-button__label">
       <span class="qr-button__glyph">▣</span>
       <strong>{{ lang.t('myQr') }}</strong>
     </span>
-    <span class="qr-button__x" aria-hidden="true">×</span>
+    <span class="qr-button__x" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor"
+          stroke-width="2.2" stroke-linecap="round" />
+      </svg>
+    </span>
   </button>
 
   <footer class="app-footer">Developed by Burkhon</footer>
@@ -394,21 +395,34 @@
   <!-- Полноэкранный QR-экран. Слой стеклянного фона, круглая кнопка
        закрытия и сам диалог — отдельные fixed-элементы (не вложены друг
        в друга), чтобы кнопка «Мой QR» (z-index 1001) могла оставаться
-       кликабельной МЕЖДУ фоном (1000) и белой карточкой QR (1002). -->
-  <div class="qr-overlay" role="presentation" (click)="closeQr()"></div>
+       кликабельной МЕЖДУ фоном (1000) и белой карточкой QR (1002).
+       --qr-x / --qr-y — центр кнопки «Мой QR», из него экран «вытекает». -->
+  <div
+    class="qr-overlay"
+    role="presentation"
+    [style.--qr-x]="qrOriginX()"
+    [style.--qr-y]="qrOriginY()"
+    (click)="closeQr()"
+    animate.leave="qr-leave"
+  ></div>
 
-  <button class="qr-close" type="button" aria-label="Закрыть" (click)="closeQr()">×</button>
+  <button class="qr-close" type="button" [attr.aria-label]="lang.t('qrCloseBtn')" (click)="closeQr()" animate.leave="qr-leave">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor"
+        stroke-width="2.2" stroke-linecap="round" />
+    </svg>
+  </button>
 
-  <section class="qr-dialog" role="dialog" aria-modal="true" aria-labelledby="qr-title">
+  <section class="qr-dialog" role="dialog" aria-modal="true" aria-labelledby="qr-title" animate.leave="qr-dialog-leave">
     <h2 id="qr-title" class="qr-dialog__title">{{ lang.t('myQr') }}</h2>
 
     <!-- Единственный непрозрачный элемент экрана: сплошной белый фон,
          без стекла/прозрачности — иначе кассовый сканер не прочитает код. -->
     <div class="qr-card">
       @if (loadingQr()) {
-        <p class="qr-card__status">Загрузка QR-кода...</p>
+        <p class="qr-card__status">{{ lang.t("qrLoading") }}</p>
       } @else if (qrImageUrl(); as qrImageUrl) {
-        <img [src]="qrImageUrl" alt="Персональный QR-код" />
+        <img [src]="qrImageUrl" [alt]="lang.t('myQr')" />
       } @else {
         <p class="qr-card__status qr-card__status--error">{{ qrError() }}</p>
       }
@@ -417,5 +431,13 @@
 }
 
 @if (showProfile()) {
-  <app-profile-settings (closed)="showProfile.set(false)" />
+  <app-profile-settings (closed)="showProfile.set(false)" animate.leave="ps-leave" />
+}
+
+@if (showHistoryScreen() && selectedStore(); as store) {
+  <app-transaction-history
+    [storeId]="store.id"
+    (closed)="showHistoryScreen.set(false)"
+    animate.leave="th-leave"
+  />
 }
