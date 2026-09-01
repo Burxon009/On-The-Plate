@@ -531,6 +531,27 @@ input:focus {
   color: #d92d20;
 }
 
+/* Код клиента для ручного ввода кассиром — стеклянная плашка под QR. */
+.qr-manual-code {
+  align-self: center;
+  padding: 12px 22px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f5f5f7;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.qr-manual-code strong {
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
 @keyframes qr-overlay-in {
   from { opacity: 0; }
   to { opacity: 1; }

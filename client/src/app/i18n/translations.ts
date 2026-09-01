@@ -130,6 +130,7 @@ export const translations = {
     qrCloseBtn: 'Закрыть',
     qrLoading: 'Загрузка QR-кода...',
     qrLoadFailed: 'Не удалось загрузить QR-код',
+    qrManualCode: 'ID клиента',
 
     // — история операций (экран) —
     historyLoading: 'Загрузка истории...',
@@ -304,6 +305,7 @@ export const translations = {
     qrCloseBtn: 'Yopish',
     qrLoading: 'QR kod yuklanmoqda...',
     qrLoadFailed: 'QR kodni yuklab boʻlmadi',
+    qrManualCode: 'Mijoz ID',
 
     historyLoading: 'Tarix yuklanmoqda...',
     historyEmpty: 'Hozircha amaliyotlar yoʻq.',
@@ -476,6 +478,7 @@ export const translations = {
     qrCloseBtn: 'Close',
     qrLoading: 'Loading QR code...',
     qrLoadFailed: 'Could not load the QR code',
+    qrManualCode: 'Client ID',
 
     historyLoading: 'Loading history...',
     historyEmpty: 'No transactions yet.',

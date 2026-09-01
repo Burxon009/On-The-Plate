@@ -3,6 +3,7 @@ import { pool } from "./db";
 import { authMiddleware, AuthRequest } from "./authMiddleware";
 import { adminMiddleware } from "./adminMiddleware";
 import { storeAdminMiddleware } from "./storeAdminMiddleware";
+import { assignManualCode } from "./manualCodeService";
 import { logger } from "./logger";
 
 const router = Router();
@@ -137,66 +138,72 @@ router.post(
   "/:storeId/join",
   authMiddleware,
   async (req: AuthRequest, res) => {
+    const userId = req.user!.userId;
+    const storeId = Number(req.params.storeId);
+
+    if (!Number.isInteger(storeId)) {
+      return res.status(400).json({
+        message: "Некорректный ID магазина",
+      });
+    }
+
+    const client = await pool.connect();
     try {
-      const userId = req.user!.userId;
-      const storeId = Number(req.params.storeId);
-
-      if (!Number.isInteger(storeId)) {
-        return res.status(400).json({
-          message: "Некорректный ID магазина",
-        });
-      }
-
-      // Проверяем, существует ли магазин
-      const storeResult = await pool.query(
-        `
-        SELECT id, name, is_active
-        FROM stores
-        WHERE id = $1
-        `,
+      const storeResult = await client.query(
+        `SELECT id, name, is_active FROM stores WHERE id = $1`,
         [storeId]
       );
 
       if (storeResult.rows.length === 0) {
-        return res.status(404).json({
-          message: "Магазин не найден",
-        });
+        return res.status(404).json({ message: "Магазин не найден" });
       }
-
       if (!storeResult.rows[0].is_active) {
-        return res.status(400).json({
-          message: "Магазин отключён",
-        });
+        return res.status(400).json({ message: "Магазин отключён" });
       }
 
-      // Добавляем магазин клиенту
-      const result = await pool.query(
+      await client.query("BEGIN");
+
+      // Создаём связь клиент↔магазин.
+      const linkResult = await client.query(
         `
         INSERT INTO user_stores (user_id, store_id)
         VALUES ($1, $2)
-        ON CONFLICT (user_id, store_id)
-        DO NOTHING
-        RETURNING id, user_id, store_id, created_at
+        ON CONFLICT (user_id, store_id) DO NOTHING
+        RETURNING id
         `,
         [userId, storeId]
       );
 
-      if (result.rows.length === 0) {
-        return res.status(409).json({
-          message: "Этот магазин уже добавлен",
-        });
+      if (linkResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({ message: "Этот магазин уже добавлен" });
       }
+
+      // Присваиваем короткий числовой код клиента — отдельная нумерация
+      // на каждый магазин, атомарно в этой же транзакции.
+      await assignManualCode(client, storeId, linkResult.rows[0].id);
+
+      const updated = await client.query(
+        `
+        SELECT id, user_id, store_id, manual_code, created_at
+          FROM user_stores
+         WHERE id = $1
+        `,
+        [linkResult.rows[0].id]
+      );
+
+      await client.query("COMMIT");
 
       res.status(201).json({
         message: "Магазин добавлен ✅",
-        userStore: result.rows[0],
+        userStore: updated.rows[0],
       });
     } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
       logger.error({ err: error }, "Ошибка добавления магазина");
-
-      res.status(500).json({
-        message: "Ошибка добавления магазина ❌",
-      });
+      res.status(500).json({ message: "Ошибка добавления магазина ❌" });
+    } finally {
+      client.release();
     }
   }
 );
@@ -222,6 +229,7 @@ router.get(
           s.primary_color,
           s.cashback_percent,
           s.is_active,
+          us.manual_code,
           us.created_at AS added_at
         FROM user_stores us
         INNER JOIN stores s ON s.id = us.store_id

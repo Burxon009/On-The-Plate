@@ -17,6 +17,8 @@ interface Store {
   logo_url: string | null;
   primary_color: string | null;
   cashback_percent: string | number;
+  /** Короткий код клиента для ручного ввода кассиром, в рамках этого магазина. */
+  manual_code?: number | null;
 }
 
 interface Wallet {
@@ -279,6 +281,12 @@ export class Dashboard implements OnInit, OnDestroy {
 
   closeQr(): void {
     this.showQr.set(false);
+  }
+
+  /** Код клиента для ручного ввода кассиром: 42 → "000042" (для текущего магазина). */
+  manualCode(): string | null {
+    const code = this.selectedStore()?.manual_code;
+    return code == null ? null : String(code).padStart(6, '0');
   }
 
   /**

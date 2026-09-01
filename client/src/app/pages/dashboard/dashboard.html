@@ -408,6 +408,14 @@
         <p class="qr-card__status qr-card__status--error">{{ qrError() }}</p>
       }
     </div>
+
+    <!-- Код клиента для ручного ввода кассиром без сканера. По центру,
+         между белой карточкой QR и кнопкой закрытия. -->
+    @if (manualCode(); as code) {
+      <div class="qr-manual-code">
+        {{ lang.t('qrManualCode') }}: <strong>{{ code }}</strong>
+      </div>
+    }
   </section>
 }
 

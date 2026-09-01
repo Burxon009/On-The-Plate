@@ -303,6 +303,64 @@ router.post(
 );
 
 /**
+ * POST /users/manual-code/resolve
+ * Найти клиента по короткому числовому коду (storeId + manualCode) —
+ * альтернатива QR, когда кассир вводит код вручную без сканера.
+ *
+ * Права те же, что и у /qr/resolve: admin видит только клиентов своих
+ * магазинов. Код уникален В ПРЕДЕЛАХ магазина, поэтому обязательно нужен
+ * и storeId, и manualCode.
+ */
+router.post(
+  "/manual-code/resolve",
+  authMiddleware,
+  adminMiddleware,
+  storeAdminMiddleware,
+  async (req, res) => {
+    try {
+      const storeId = Number(req.body?.storeId);
+      const manualCode = Number(req.body?.manualCode);
+
+      if (!Number.isInteger(manualCode) || manualCode <= 0) {
+        return res.status(400).json({ message: "Некорректный код клиента" });
+      }
+
+      const result = await pool.query(
+        `
+        SELECT
+          u.id,
+          u.email,
+          u.name,
+          u.role,
+          u.created_at,
+          u.updated_at
+        FROM users u
+        INNER JOIN user_stores us
+          ON us.user_id = u.id
+         AND us.store_id = $1
+         AND us.manual_code = $2
+        `,
+        [storeId, manualCode]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          message: "Клиент с таким кодом не найден в этом магазине",
+        });
+      }
+
+      res.json({
+        message: "Клиент найден ✅",
+        user: result.rows[0],
+      });
+    } catch (error) {
+      logger.error({ err: error }, "Ошибка поиска клиента по коду");
+      res.status(500).json({ message: "Ошибка поиска клиента по коду ❌" });
+    }
+  }
+);
+
+/**
  * PATCH /users/me
  * Обновить имя и/или телефон текущего пользователя.
  * Телефон — просто контактное поле, без SMS/OTP-проверки.
