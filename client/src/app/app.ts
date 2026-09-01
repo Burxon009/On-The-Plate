@@ -3,12 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RouterOutlet } from '@angular/router';
 import { finalize, timeout } from 'rxjs';
-import { AuthService } from './services/auth.service';
+import { AuthService, type AuthIdentifier } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 import { LanguageService } from './services/language.service';
 import type { TranslationKey } from './i18n/translations';
 import { ThemeToggle } from './components/theme-toggle/theme-toggle';
 import { LanguageSwitcher } from './components/language-switcher/language-switcher';
+
+type AuthMethod = 'choose' | 'email' | 'phone';
 
 @Component({
   imports: [RouterOutlet, FormsModule, ThemeToggle, LanguageSwitcher],
@@ -30,8 +32,14 @@ export class App {
   // Все поля состояния формы входа — signals.
   // Это zoneless-приложение (без zone.js): экран перерисовывается только
   // когда меняется signal или срабатывает DOM-событие внутри шаблона.
+
+  /** Экран выбора способа входа → ввод email/телефона → ввод кода. */
+  readonly authMethod = signal<AuthMethod>('choose');
+
   email = signal('');
-  private verificationEmail = '';
+  phone = signal('');
+  private verificationId: AuthIdentifier | null = null;
+
   code = signal('');
   name = signal('');
   codeRequested = signal(false);
@@ -64,29 +72,55 @@ export class App {
     });
   }
 
+  /** Выбрать способ входа (email или телефон). */
+  chooseMethod(method: 'email' | 'phone'): void {
+    this.authMethod.set(method);
+    this.error.set('');
+  }
+
+  /** Вернуться к экрану выбора способа входа. */
+  backToMethods(): void {
+    this.authMethod.set('choose');
+    this.codeRequested.set(false);
+    this.code.set('');
+    this.error.set('');
+    this.verificationId = null;
+  }
+
   login(): void {
     if (this.loading()) {
       return;
     }
 
-    const normalizedEmail = this.normalizeEmail(this.email());
+    let identifier: AuthIdentifier;
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      this.error.set(this.lang.t('errorEmailInvalid'));
-      return;
+    if (this.authMethod() === 'phone') {
+      const phone = this.phone().trim().replace(/[\s()\-.]/g, '');
+      if (!/^\+[1-9]\d{8,14}$/.test(phone)) {
+        this.error.set(this.lang.t('errorPhoneInvalid'));
+        return;
+      }
+      identifier = { phone };
+    } else {
+      const email = this.normalizeEmail(this.email());
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        this.error.set(this.lang.t('errorEmailInvalid'));
+        return;
+      }
+      identifier = { email };
     }
 
     this.loading.set(true);
     this.error.set('');
 
-    this.auth.requestCode(normalizedEmail).pipe(
-      timeout(8000),
+    this.auth.requestCode(identifier).pipe(
+      timeout(15000),
       finalize(() => {
         this.loading.set(false);
       }),
     ).subscribe({
-      next: (response) => {
-        this.verificationEmail = normalizedEmail;
+      next: () => {
+        this.verificationId = identifier;
         this.codeRequested.set(true);
       },
       error: (error) => {
@@ -104,8 +138,8 @@ export class App {
       return;
     }
 
-    if (!this.verificationEmail) {
-      this.error.set('Сначала запросите код повторно.');
+    if (!this.verificationId) {
+      this.error.set(this.lang.t('errorRequestFailed'));
       return;
     }
 
@@ -122,14 +156,14 @@ export class App {
     this.loading.set(true);
     this.error.set('');
 
-    this.auth.verifyCode(this.verificationEmail, this.code().trim(), this.name().trim()).pipe(
-      timeout(8000),
+    this.auth.verifyCode(this.verificationId, this.code().trim(), this.name().trim()).pipe(
+      timeout(15000),
       finalize(() => {
         this.loading.set(false);
       }),
     ).subscribe({
       next: (session) => {
-        this.verificationEmail = '';
+        this.verificationId = null;
         this.name.set('');
         // Имя для приветствия — из СВЕЖЕГО ответа verify-code (актуальное
         // из БД на этот момент, с учётом смены имени через профиль),
@@ -149,14 +183,12 @@ export class App {
     });
   }
 
-  /**
-   * Вернуться на экран ввода email, не перезагружая страницу.
-   */
-  changeEmail(): void {
+  /** Вернуться на экран ввода email/телефона, не перезагружая страницу. */
+  changeIdentifier(): void {
     this.codeRequested.set(false);
-    this.verificationEmail = '';
     this.code.set('');
     this.error.set('');
+    this.verificationId = null;
   }
 
   private normalizeEmail(email: string): string {

@@ -12,79 +12,114 @@
     <section class="login">
       <h2>{{ lang.t('loginTitle') }}</h2>
 
-      <p class="description">
-        {{ codeRequested() ? lang.t('loginCodePrompt') : lang.t('loginPrompt') }}
-      </p>
+      @if (authMethod() === 'choose') {
 
-      <div class="form-slot" [class.is-open]="!codeRequested()" [attr.inert]="codeRequested() ? '' : null">
-        <div class="form-slot__inner">
-          <form (ngSubmit)="login()">
+        <p class="description">{{ lang.t('authChoosePrompt') }}</p>
 
-            <input
-              type="email"
-              name="email"
-              [ngModel]="email()"
-              (ngModelChange)="email.set($event)"
-              placeholder="you@example.com"
-              autocomplete="email"
-              required
-            />
+        <div class="auth-methods">
+          <button type="button" class="auth-method" (click)="chooseMethod('email')">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>{{ lang.t('authChooseEmail') }}</span>
+          </button>
 
-            <button
-              type="submit"
-              [disabled]="loading()"
-            >
-              {{ loading() ? lang.t('loginContinueLoading') : lang.t('loginContinue') }}
-            </button>
-
-          </form>
+          <button type="button" class="auth-method" (click)="chooseMethod('phone')">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <line x1="10.5" y1="18.5" x2="13.5" y2="18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            <span>{{ lang.t('authChoosePhone') }}</span>
+          </button>
         </div>
-      </div>
 
-      <div class="form-slot" [class.is-open]="codeRequested()" [attr.inert]="codeRequested() ? null : ''">
-        <div class="form-slot__inner">
-          <form (ngSubmit)="verifyCode()">
+      } @else {
 
-            <input
-              type="text"
-              name="code"
-              [ngModel]="code()"
-              (ngModelChange)="code.set($event)"
-              placeholder="123456"
-              inputmode="numeric"
-              maxlength="6"
-              autocomplete="one-time-code"
-              required
-            />
+        <p class="description">
+          {{ codeRequested()
+              ? (authMethod() === 'phone' ? lang.t('phoneCodePrompt') : lang.t('loginCodePrompt'))
+              : (authMethod() === 'phone' ? lang.t('phonePrompt') : lang.t('loginPrompt')) }}
+        </p>
 
-            <input
-              type="text"
-              name="name"
-              [ngModel]="name()"
-              (ngModelChange)="name.set($event)"
-              [placeholder]="lang.t('loginNamePlaceholder')"
-              autocomplete="name"
-              required
-            />
+        <div class="form-slot" [class.is-open]="!codeRequested()" [attr.inert]="codeRequested() ? '' : null">
+          <div class="form-slot__inner">
+            <form (ngSubmit)="login()">
 
-            <button
-              type="submit"
-              [disabled]="loading()"
-            >
-              {{ loading() ? lang.t('loginConfirmLoading') : lang.t('loginConfirmCode') }}
-            </button>
+              @if (authMethod() === 'phone') {
+                <input
+                  type="tel"
+                  name="phone"
+                  [ngModel]="phone()"
+                  (ngModelChange)="phone.set($event)"
+                  [placeholder]="lang.t('phonePlaceholder')"
+                  autocomplete="tel"
+                  inputmode="tel"
+                  required
+                />
+              } @else {
+                <input
+                  type="email"
+                  name="email"
+                  [ngModel]="email()"
+                  (ngModelChange)="email.set($event)"
+                  placeholder="you@example.com"
+                  autocomplete="email"
+                  required
+                />
+              }
 
-            <button
-              type="button"
-              class="link-button"
-              (click)="changeEmail()"
-            >
-              {{ lang.t('loginChangeEmail') }}
-            </button>
+              <button type="submit" [disabled]="loading()">
+                {{ loading() ? lang.t('loginContinueLoading') : lang.t('loginContinue') }}
+              </button>
 
-          </form>
+              <button type="button" class="link-button" (click)="backToMethods()">
+                {{ lang.t('authOtherMethod') }}
+              </button>
+
+            </form>
+          </div>
         </div>
-      </div>
+
+        <div class="form-slot" [class.is-open]="codeRequested()" [attr.inert]="codeRequested() ? null : ''">
+          <div class="form-slot__inner">
+            <form (ngSubmit)="verifyCode()">
+
+              <input
+                type="text"
+                name="code"
+                [ngModel]="code()"
+                (ngModelChange)="code.set($event)"
+                placeholder="123456"
+                inputmode="numeric"
+                maxlength="6"
+                autocomplete="one-time-code"
+                required
+              />
+
+              <input
+                type="text"
+                name="name"
+                [ngModel]="name()"
+                (ngModelChange)="name.set($event)"
+                [placeholder]="lang.t('loginNamePlaceholder')"
+                autocomplete="name"
+                required
+              />
+
+              <button type="submit" [disabled]="loading()">
+                {{ loading() ? lang.t('loginConfirmLoading') : lang.t('loginConfirmCode') }}
+              </button>
+
+              <button type="button" class="link-button" (click)="changeIdentifier()">
+                {{ authMethod() === 'phone' ? lang.t('loginChangePhone') : lang.t('loginChangeEmail') }}
+              </button>
+
+            </form>
+          </div>
+        </div>
+
+      }
 
       @if (error()) {
         <p class="error" animate.enter="app-enter" animate.leave="app-leave">{{ error() }}</p>

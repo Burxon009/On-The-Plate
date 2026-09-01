@@ -281,28 +281,16 @@ export class Dashboard implements OnInit, OnDestroy {
     this.showQr.set(false);
   }
 
-  /** Точка, из которой «вытекает» QR-экран — центр кнопки «Мой QR». */
-  readonly qrOriginX = signal('50%');
-  readonly qrOriginY = signal('90%');
-
   /**
-   * Одна кнопка «Мой QR» и открывает, и закрывает полноэкранный QR —
-   * её вид (иконка+текст ↔ крестик) переключается по showQr() в шаблоне.
-   * При открытии запоминаем позицию кнопки — QR-экран раскрывается
-   * «каплей» из неё (clip-path circle с центром в этой точке).
+   * Одна кнопка «Мой QR» и открывает, и закрывает QR-экран: в открытом
+   * состоянии она сжимается в круглый «×» (морфинг в шаблоне по showQr()).
    */
-  toggleQr(event?: Event): void {
+  toggleQr(): void {
     if (this.showQr()) {
       this.closeQr();
-      return;
+    } else {
+      this.openQr();
     }
-    const btn = event?.currentTarget as HTMLElement | undefined;
-    if (btn) {
-      const r = btn.getBoundingClientRect();
-      this.qrOriginX.set(`${Math.round(r.left + r.width / 2)}px`);
-      this.qrOriginY.set(`${Math.round(r.top + r.height / 2)}px`);
-    }
-    this.openQr();
   }
 
   logout(): void {

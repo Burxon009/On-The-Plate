@@ -88,12 +88,6 @@
           <span>{{ lang.t('walletCashback') }}</span>
           <strong>{{ store.cashback_percent }}%</strong>
         </div>
-        <div>
-          <span>{{ lang.t('walletPurchases') }}</span>
-          <button type="button" class="wallet-link" (click)="openHistoryScreen()">
-            {{ lang.t('walletSeeHistory') }}
-          </button>
-        </div>
       </div>
     </section>
 
@@ -368,13 +362,16 @@
     </section>
   }
 
+  <!-- Одна кнопка: «Мой QR» ↔ круглый «×». Открывает и закрывает QR-экран.
+       z-index 1001 — между фоном (1000) и карточкой QR (1002), чтобы
+       круглый «×» оставался кликабельным поверх затемнения. -->
   <button
     class="qr-button"
     [class.qr-button--open]="showQr()"
     type="button"
-    [attr.aria-label]="showQr() ? lang.t('qrCloseLabel') : lang.t('qrOpenLabel')"
+    [attr.aria-label]="showQr() ? lang.t('qrCloseBtn') : lang.t('qrOpenLabel')"
     [attr.aria-expanded]="showQr()"
-    (click)="toggleQr($event)"
+    (click)="toggleQr()"
   >
     <span class="qr-button__label">
       <span class="qr-button__glyph">▣</span>
@@ -392,26 +389,10 @@
 </div>
 
 @if (showQr()) {
-  <!-- Полноэкранный QR-экран. Слой стеклянного фона, круглая кнопка
-       закрытия и сам диалог — отдельные fixed-элементы (не вложены друг
-       в друга), чтобы кнопка «Мой QR» (z-index 1001) могла оставаться
-       кликабельной МЕЖДУ фоном (1000) и белой карточкой QR (1002).
-       --qr-x / --qr-y — центр кнопки «Мой QR», из него экран «вытекает». -->
-  <div
-    class="qr-overlay"
-    role="presentation"
-    [style.--qr-x]="qrOriginX()"
-    [style.--qr-y]="qrOriginY()"
-    (click)="closeQr()"
-    animate.leave="qr-leave"
-  ></div>
-
-  <button class="qr-close" type="button" [attr.aria-label]="lang.t('qrCloseBtn')" (click)="closeQr()" animate.leave="qr-leave">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor"
-        stroke-width="2.2" stroke-linecap="round" />
-    </svg>
-  </button>
+  <!-- QR-экран: тёмный стеклянный фон (fade) + карточка по центру
+       (fade + лёгкий scale). Закрытие — та же кнопка «Мой QR» (стала «×»)
+       или клик по фону. -->
+  <div class="qr-overlay" role="presentation" (click)="closeQr()" animate.leave="qr-leave"></div>
 
   <section class="qr-dialog" role="dialog" aria-modal="true" aria-labelledby="qr-title" animate.leave="qr-dialog-leave">
     <h2 id="qr-title" class="qr-dialog__title">{{ lang.t('myQr') }}</h2>

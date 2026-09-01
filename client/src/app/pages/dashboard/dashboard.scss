@@ -221,7 +221,6 @@ input:focus {
 
 .wallet-info {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
@@ -240,21 +239,6 @@ input:focus {
 
 .wallet-info strong {
   font-size: 14px;
-}
-
-/* «Покупки → см. историю операций» — рабочая ссылка на раздел истории */
-.wallet-link {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--wallet-text);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
 }
 
 /* SECTIONS */
@@ -358,16 +342,18 @@ input:focus {
 
 /* Плавающая кнопка внизу экрана. Одна и та же кнопка открывает и
    закрывает QR: в открытом состоянии сжимается в стеклянный круг с «×».
-   z-index 1001 — между стеклянным фоном оверлея (1000) и белой
-   карточкой QR (1002), чтобы кнопка не пряталась под оверлеем. */
+   z-index 1001 — между стеклянным фоном (1000) и карточкой QR (1002),
+   чтобы круглый «×» оставался кликабельным поверх затемнения. */
 .qr-button {
   position: fixed;
   left: 50%;
   bottom: 20px;
   transform: translateX(-50%);
   z-index: 1001;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   overflow: hidden;
   height: 52px;
   padding: 0 26px;
@@ -398,21 +384,13 @@ input:focus {
   color: var(--text-primary);
 }
 
-/* Оба варианта содержимого лежат в одной grid-ячейке — кросс-фейд
-   без скачка размера при переключении. */
-.qr-button__label,
-.qr-button__x {
-  grid-area: 1 / 1;
+.qr-button__label {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 9px;
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
-}
-
-.qr-button__label {
-  gap: 9px;
 }
 
 .qr-button__label strong {
@@ -424,9 +402,19 @@ input:focus {
   font-size: 20px;
 }
 
+/* «×» — абсолютно по центру кнопки, независимо от текста рядом:
+   так крестик всегда ровно в середине круга. */
 .qr-button__x {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
   transform: rotate(-90deg) scale(0.6);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
 .qr-button__x svg {
@@ -435,7 +423,7 @@ input:focus {
   height: 22px;
 }
 
-/* Открытое состояние: круг + стекло (в обеих темах) + виден «×» */
+/* Открытое состояние: круг + стекло (одинаково в обеих темах) + виден «×» */
 .qr-button--open {
   width: 56px;
   padding: 0;
@@ -447,8 +435,6 @@ input:focus {
   color: #f5f5f7;
 }
 
-/* Стеклянный круг «×» должен выглядеть одинаково в обеих темах —
-   перебиваем более специфичное правило :host-context(...) .qr-button. */
 :host-context([data-theme='dark']) .qr-button--open {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -466,12 +452,11 @@ input:focus {
   transform: rotate(0) scale(1);
 }
 
-/* ── Полноэкранный QR-экран ───────────────────────────────────────── */
+/* ── QR-экран ─────────────────────────────────────────────────────────
+   Простая анимация: фон — fade, карточка — fade + лёгкий scale.
+   Без привязки к координатам кнопки. */
 
-/* Стеклянный тёмный фон — ОДИНАКОВО в обеих темах: это отдельный
-   полноэкранный режим, он не следует палитре страницы.
-   «Капля»: экран раскрывается кругом (clip-path) из центра кнопки
-   «Мой QR» (--qr-x / --qr-y), при закрытии — втягивается обратно. */
+/* Стеклянный тёмный фон — ОДИНАКОВО в обеих темах (отдельный режим). */
 .qr-overlay {
   position: fixed;
   inset: 0;
@@ -479,8 +464,11 @@ input:focus {
   background: rgba(10, 10, 20, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  clip-path: circle(150% at var(--qr-x, 50%) var(--qr-y, 90%));
-  animation: qr-drip-in 0.36s ease;
+  animation: qr-overlay-in 0.3s ease;
+}
+
+.qr-overlay.qr-leave {
+  animation: qr-overlay-in 0.25s ease reverse forwards;
 }
 
 .qr-dialog {
@@ -495,8 +483,11 @@ input:focus {
   gap: 22px;
   width: min(90vw, 340px);
   max-height: 90vh;
-  /* появляется чуть позже «капли», когда тёмный фон уже накрыл экран */
-  animation: qr-dialog-in 0.28s ease 0.12s both;
+  animation: qr-dialog-in 0.3s ease;
+}
+
+.qr-dialog.qr-dialog-leave {
+  animation: qr-dialog-out 0.25s ease forwards;
 }
 
 .qr-dialog__title {
@@ -508,9 +499,8 @@ input:focus {
   font-family: var(--font-heading);
 }
 
-/* Единственный непрозрачный элемент экрана — сплошной белый фон.
-   Никакого backdrop-filter / прозрачности: сканер на кассе должен
-   физически считать код. */
+/* Единственный непрозрачный элемент — сплошной белый фон.
+   Никакого backdrop-filter / прозрачности: сканер должен считать код. */
 .qr-card {
   display: flex;
   align-items: center;
@@ -520,7 +510,7 @@ input:focus {
   padding: 24px;
   border-radius: 24px;
   background: #ffffff;
-  box-shadow: 0 0 60px rgba(45, 90, 61, 0.45); /* мягкое зелёное свечение — акцент экрана */
+  box-shadow: 0 0 60px rgba(45, 90, 61, 0.45);
 }
 
 .qr-card img {
@@ -541,52 +531,15 @@ input:focus {
   color: #d92d20;
 }
 
-/* Стеклянная круглая кнопка закрытия в углу экрана.
-   Крестик — SVG (две линии), центрируется идеально, без «кривизны»
-   шрифтового символа ×. */
-.qr-close {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1003;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: #f5f5f7;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.qr-close svg {
-  display: block;
-  width: 20px;
-  height: 20px;
-}
-
-.qr-close:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-@keyframes qr-drip-in {
-  from {
-    clip-path: circle(0 at var(--qr-x, 50%) var(--qr-y, 90%));
-  }
-  to {
-    clip-path: circle(150% at var(--qr-x, 50%) var(--qr-y, 90%));
-  }
+@keyframes qr-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes qr-dialog-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.92);
+    transform: translate(-50%, -50%) scale(0.95);
   }
   to {
     opacity: 1;
@@ -594,44 +547,21 @@ input:focus {
   }
 }
 
-/* Плавное закрытие QR-экрана (animate.leave): фон «втягивается» обратно
-   в кнопку, кнопка × и диалог просто гаснут. */
-.qr-overlay.qr-leave {
-  animation: qr-drip-out 0.32s ease forwards;
-}
-
-.qr-close.qr-leave {
-  animation: qr-fade-out 0.2s ease forwards;
-}
-
-.qr-dialog.qr-dialog-leave {
-  animation: qr-dialog-out 0.2s ease forwards;
-}
-
-@keyframes qr-drip-out {
-  from {
-    clip-path: circle(150% at var(--qr-x, 50%) var(--qr-y, 90%));
-  }
-  to {
-    clip-path: circle(0 at var(--qr-x, 50%) var(--qr-y, 90%));
-  }
-}
-
-@keyframes qr-fade-out {
-  to { opacity: 0; }
-}
-
 @keyframes qr-dialog-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
   to {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.94);
+    transform: translate(-50%, -50%) scale(0.96);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .qr-overlay,
-  .qr-dialog,
   .qr-overlay.qr-leave,
+  .qr-dialog,
   .qr-dialog.qr-dialog-leave {
     animation-duration: 0.01ms;
   }

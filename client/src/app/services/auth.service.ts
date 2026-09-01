@@ -21,6 +21,9 @@ interface SessionResponse {
 
 interface RequestCodeResponse { message: string; }
 
+/** Способ входа: email или телефон. */
+export type AuthIdentifier = { email: string } | { phone: string };
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = API_URL;
@@ -34,14 +37,14 @@ export class AuthService {
   isAuthenticated(): boolean { return Boolean(this.accessToken); }
   getToken(): string | null { return this.accessToken; }
 
-  requestCode(email: string): Observable<RequestCodeResponse> {
-    return this.http.post<RequestCodeResponse>(`${this.apiUrl}/auth/request-code`, { email });
+  requestCode(identifier: AuthIdentifier): Observable<RequestCodeResponse> {
+    return this.http.post<RequestCodeResponse>(`${this.apiUrl}/auth/request-code`, identifier);
   }
 
-  verifyCode(email: string, code: string, name: string): Observable<SessionResponse> {
-    return this.http.post<SessionResponse>(`${this.apiUrl}/auth/verify-code`, { email, code, name }).pipe(
-      tap((session) => this.setSession(session)),
-    );
+  verifyCode(identifier: AuthIdentifier, code: string, name: string): Observable<SessionResponse> {
+    return this.http
+      .post<SessionResponse>(`${this.apiUrl}/auth/verify-code`, { ...identifier, code, name })
+      .pipe(tap((session) => this.setSession(session)));
   }
 
   restoreSession(force = false): Observable<boolean> {

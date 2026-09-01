@@ -3,7 +3,11 @@ import { pool } from "./db";
 import {
   requestVerificationCode,
   verifyCode,
+  requestPhoneVerificationCode,
+  verifyPhoneCode,
   isValidEmail,
+  isValidPhone,
+  normalizePhone,
   VerificationError,
 } from "./verificationService";
 import {
@@ -20,6 +24,68 @@ const isProduction = process.env.NODE_ENV === "production";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+function cleanName(name: unknown): string | null {
+  return typeof name === "string" && name.trim()
+    ? name.trim().slice(0, 100)
+    : null;
+}
+
+type SessionUserRow = {
+  id: number;
+  role: string;
+  email?: string | null;
+  name?: string | null;
+  phone?: string | null;
+};
+
+/** Дозаполнить имя, если пользователь его ещё не задавал. */
+async function applyNameIfMissing(
+  user: SessionUserRow,
+  name: unknown
+): Promise<SessionUserRow> {
+  const clean = cleanName(name);
+  if (!clean || user.name) return user;
+  const updated = await pool.query(
+    "UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, name, role",
+    [clean, user.id]
+  );
+  return updated.rows[0];
+}
+
+async function findOrCreateUserByEmail(
+  email: string,
+  name: unknown
+): Promise<SessionUserRow> {
+  const found = await pool.query(
+    "SELECT id, email, name, role FROM users WHERE email = $1",
+    [email]
+  );
+  if (found.rows[0]) return applyNameIfMissing(found.rows[0], name);
+
+  const created = await pool.query(
+    "INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id, email, name, role",
+    [email, cleanName(name)]
+  );
+  return created.rows[0];
+}
+
+async function findOrCreateUserByPhone(
+  phone: string,
+  name: unknown
+): Promise<SessionUserRow> {
+  const found = await pool.query(
+    "SELECT id, email, name, role, phone FROM users WHERE phone = $1",
+    [phone]
+  );
+  if (found.rows[0]) return applyNameIfMissing(found.rows[0], name);
+
+  const created = await pool.query(
+    "INSERT INTO users (phone, name) VALUES ($1, $2) RETURNING id, email, name, role, phone",
+    [phone, cleanName(name)]
+  );
+  return created.rows[0];
 }
 
 function requestContext(req: Request) {
@@ -59,7 +125,7 @@ function clearRefreshCookie(res: Response) {
   });
 }
 
-function sendSession(res: Response, req: Request, user: { id: number; role: string; email?: string; name?: string | null }, refreshToken: string) {
+function sendSession(res: Response, req: Request, user: { id: number; role: string; email?: string | null; name?: string | null; phone?: string | null }, refreshToken: string) {
   setRefreshCookie(res, refreshToken);
   const response: Record<string, unknown> = {
     message: "Авторизация успешна",
@@ -72,15 +138,28 @@ function sendSession(res: Response, req: Request, user: { id: number; role: stri
   return res.json(response);
 }
 
+// Тип identifier определяется по формату: email содержит "@",
+// телефон — «+» и цифры (E.164). request-code / verify-code принимают
+// либо { email }, либо { phone } в теле.
 router.post("/request-code", async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!isValidEmail(email)) return res.status(400).json({ message: "Некорректный email" });
-    await requestVerificationCode(email);
-    // Same response for valid requests prevents account enumeration.
-    return res.json({ message: "Если адрес доступен, код будет отправлен" });
+    const { email, phone } = req.body ?? {};
+
+    if (isValidPhone(phone)) {
+      await requestPhoneVerificationCode(phone);
+    } else if (isValidEmail(email)) {
+      await requestVerificationCode(email);
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Укажите корректный email или номер телефона" });
+    }
+
+    // Одинаковый ответ для валидных запросов — не даёт перебирать аккаунты.
+    return res.json({ message: "Если данные верны, код будет отправлен" });
   } catch (error) {
-    if (error instanceof VerificationError) return res.status(400).json({ message: error.message });
+    if (error instanceof VerificationError)
+      return res.status(400).json({ message: error.message });
     logger.error({ err: error }, "OTP request failed");
     return res.status(500).json({ message: "Не удалось запросить код" });
   }
@@ -88,31 +167,34 @@ router.post("/request-code", async (req, res) => {
 
 router.post("/verify-code", async (req, res) => {
   try {
-    const { email, code, name } = req.body;
-    if (!isValidEmail(email) || typeof code !== "string") {
-      return res.status(400).json({ message: "Некорректные данные подтверждения" });
+    const { email, phone, code, name } = req.body ?? {};
+    if (typeof code !== "string") {
+      return res
+        .status(400)
+        .json({ message: "Некорректные данные подтверждения" });
     }
-    await verifyCode(email, code);
-    const normalizedEmail = normalizeEmail(email);
-    let userResult = await pool.query("SELECT id, email, name, role FROM users WHERE email = $1", [normalizedEmail]);
-    let user = userResult.rows[0];
-    if (!user) {
-      const created = await pool.query(
-        "INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id, email, name, role",
-        [normalizedEmail, typeof name === "string" ? name.trim().slice(0, 100) || null : null]
-      );
-      user = created.rows[0];
-    } else if (typeof name === "string" && name.trim() && !user.name) {
-      const updated = await pool.query(
-        "UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, name, role",
-        [name.trim().slice(0, 100), user.id]
-      );
-      user = updated.rows[0];
+
+    let user: SessionUserRow;
+    if (isValidPhone(phone)) {
+      await verifyPhoneCode(phone, code);
+      user = await findOrCreateUserByPhone(normalizePhone(phone), name);
+    } else if (isValidEmail(email)) {
+      await verifyCode(email, code);
+      user = await findOrCreateUserByEmail(normalizeEmail(email), name);
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Некорректные данные подтверждения" });
     }
+
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      const refreshToken = await createRefreshSession(client, user.id, requestContext(req));
+      const refreshToken = await createRefreshSession(
+        client,
+        user.id,
+        requestContext(req)
+      );
       await client.query("COMMIT");
       return sendSession(res, req, user, refreshToken);
     } catch (error) {
@@ -122,9 +204,12 @@ router.post("/verify-code", async (req, res) => {
       client.release();
     }
   } catch (error) {
-    if (error instanceof VerificationError) return res.status(400).json({ message: error.message });
+    if (error instanceof VerificationError)
+      return res.status(400).json({ message: error.message });
     logger.error({ err: error }, "OTP verification failed");
-    return res.status(500).json({ message: "Не удалось завершить авторизацию" });
+    return res
+      .status(500)
+      .json({ message: "Не удалось завершить авторизацию" });
   }
 });
 

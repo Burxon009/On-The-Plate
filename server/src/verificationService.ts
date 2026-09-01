@@ -1,12 +1,20 @@
 import crypto from "crypto";
 import { pool } from "./db";
 import { emailService } from "./emailService";
+import {
+  sendVerificationMessage,
+  checkVerificationStatus,
+  TelegramGatewayError,
+} from "./telegramGatewayService";
 
 const CODE_TTL_MINUTES = 5;
 const RESEND_COOLDOWN_SECONDS = 60;
 
 // Простая, но рабочая проверка формата email.
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Телефон в формате E.164: «+» и 8–15 цифр, первая — не ноль.
+const PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
 
 const CODE_PEPPER = process.env.CODE_PEPPER ?? process.env.JWT_SECRET ?? "";
 
@@ -18,8 +26,16 @@ export function isValidEmail(email: unknown): email is string {
   return typeof email === "string" && EMAIL_REGEX.test(email);
 }
 
+export function isValidPhone(phone: unknown): phone is string {
+  return typeof phone === "string" && PHONE_REGEX.test(phone.trim());
+}
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+export function normalizePhone(phone: string): string {
+  return phone.trim();
 }
 
 function hashCode(identifier: string, code: string): string {
@@ -192,4 +208,149 @@ export async function verifyCode(
   if (wrongCodeError) {
     throw wrongCodeError;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+ * ТЕЛЕФОН — через Telegram Gateway.
+ *
+ * Отличие от email: код генерирует и проверяет САМ Telegram. Мы храним
+ * в verification_codes только `request_id` (code_hash = NULL) и общий
+ * cooldown/expiry, а валидность кода спрашиваем у Telegram.
+ * ──────────────────────────────────────────────────────────────────── */
+
+/** Запросить код подтверждения на телефон (Telegram Gateway). */
+export async function requestPhoneVerificationCode(phone: string): Promise<void> {
+  if (!isValidPhone(phone)) {
+    throw new VerificationError("Некорректный номер телефона");
+  }
+
+  const identifier = normalizePhone(phone);
+
+  const recentResult = await pool.query(
+    `
+    SELECT created_at
+    FROM verification_codes
+    WHERE identifier = $1
+    ORDER BY created_at DESC
+    LIMIT 1
+    `,
+    [identifier]
+  );
+
+  if (recentResult.rows.length > 0) {
+    const lastCreatedAt = new Date(recentResult.rows[0].created_at);
+    const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
+
+    if (secondsSinceLast < RESEND_COOLDOWN_SECONDS) {
+      const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSinceLast);
+      throw new VerificationError(
+        `Повторная отправка возможна через ${wait} сек.`
+      );
+    }
+  }
+
+  let requestId: string;
+  try {
+    const status = await sendVerificationMessage(identifier, {
+      ttlSeconds: CODE_TTL_MINUTES * 60,
+    });
+    requestId = status.request_id;
+  } catch (error) {
+    if (error instanceof TelegramGatewayError) {
+      throw new VerificationError(
+        "Не удалось отправить код в Telegram. Проверьте номер и попробуйте ещё раз."
+      );
+    }
+    throw error;
+  }
+
+  const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000);
+
+  await pool.query(
+    `
+    INSERT INTO verification_codes (identifier, request_id, expires_at)
+    VALUES ($1, $2, $3)
+    `,
+    [identifier, requestId, expiresAt]
+  );
+}
+
+/**
+ * Проверить код с телефона. Валидность кода определяет Telegram
+ * (verification_status). Наши локальные проверки — только «код запрошен»,
+ * «не использован», «не истёк».
+ */
+export async function verifyPhoneCode(
+  phone: string,
+  code: string
+): Promise<void> {
+  if (!isValidPhone(phone)) {
+    throw new VerificationError("Некорректный номер телефона");
+  }
+
+  if (typeof code !== "string" || !/^\d{4,8}$/.test(code)) {
+    throw new VerificationError("Код должен состоять из 4–8 цифр");
+  }
+
+  const identifier = normalizePhone(phone);
+
+  const result = await pool.query(
+    `
+    SELECT id, request_id, expires_at, consumed_at
+    FROM verification_codes
+    WHERE identifier = $1 AND request_id IS NOT NULL
+    ORDER BY created_at DESC
+    LIMIT 1
+    `,
+    [identifier]
+  );
+
+  if (result.rows.length === 0) {
+    throw new VerificationError(
+      "Код не запрошен для этого номера. Сначала запросите код."
+    );
+  }
+
+  const row = result.rows[0];
+
+  if (row.consumed_at) {
+    throw new VerificationError("Код уже использован. Запросите новый.");
+  }
+
+  if (new Date(row.expires_at).getTime() < Date.now()) {
+    throw new VerificationError("Срок действия кода истёк. Запросите новый.");
+  }
+
+  let status;
+  try {
+    status = await checkVerificationStatus(row.request_id, code);
+  } catch (error) {
+    if (error instanceof TelegramGatewayError) {
+      throw new VerificationError("Не удалось проверить код. Попробуйте ещё раз.");
+    }
+    throw error;
+  }
+
+  const verificationStatus = status.verification_status?.status;
+
+  if (verificationStatus === "code_valid") {
+    await pool.query(
+      `UPDATE verification_codes SET consumed_at = NOW() WHERE id = $1`,
+      [row.id]
+    );
+    return;
+  }
+
+  if (verificationStatus === "code_max_attempts_exceeded") {
+    throw new VerificationError(
+      "Превышено число попыток. Запросите новый код."
+    );
+  }
+
+  if (verificationStatus === "expired") {
+    throw new VerificationError("Срок действия кода истёк. Запросите новый.");
+  }
+
+  // code_invalid или код ещё не введён на стороне Telegram
+  throw new VerificationError("Неверный код. Попробуйте ещё раз.");
 }

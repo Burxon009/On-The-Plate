@@ -102,6 +102,51 @@ h2 {
   font-size: 15px;
 }
 
+/* ── Экран выбора способа входа: две большие кнопки ─────────────────
+   Тёмный скруглённый прямоугольник, иконка + текст, на всю ширину. */
+.auth-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.auth-method {
+  width: 100%;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: #f2f5f2;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.08s ease;
+}
+
+.auth-method:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.auth-method:active {
+  transform: scale(0.99);
+}
+
+.auth-method svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+
 /* ── Плавная смена «email → код»: обе формы всегда в DOM, свёрнутая
    схлопнута через grid-template-rows 0fr→1fr (это анимируется). ── */
 .login {
