@@ -27,15 +27,22 @@ export function isValidEmail(email: unknown): email is string {
 }
 
 export function isValidPhone(phone: unknown): phone is string {
-  return typeof phone === "string" && PHONE_REGEX.test(phone.trim());
+  return typeof phone === "string" && PHONE_REGEX.test(normalizePhone(phone));
 }
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+/**
+ * Приводит телефон к каноническому E.164: только «+» и цифры.
+ * Пробелы, дефисы, скобки убираются — чтобы номер, сохранённый через
+ * профиль («+998 88 852 09 06»), совпадал при поиске с номером входа
+ * («+998888520906»). Именно в этом виде телефон лежит в users.phone
+ * и в verification_codes.identifier.
+ */
 export function normalizePhone(phone: string): string {
-  return phone.trim();
+  return `+${phone.replace(/\D/g, "")}`;
 }
 
 function hashCode(identifier: string, code: string): string {

@@ -141,9 +141,10 @@ h2 {
   transform: scale(0.99);
 }
 
-.auth-method svg {
-  width: 22px;
-  height: 22px;
+/* Цветные фирменные иконки (Telegram / конверт) — свой fill, не currentColor */
+.auth-method__icon {
+  width: 24px;
+  height: 24px;
   flex: 0 0 auto;
 }
 

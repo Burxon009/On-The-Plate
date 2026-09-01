@@ -18,17 +18,20 @@
 
         <div class="auth-methods">
           <button type="button" class="auth-method" (click)="chooseMethod('email')">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" />
-              <path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            <svg class="auth-method__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path fill="#4caf50" d="M45 16.2l-5 2.75-5 4.75L35 40h7c1.657 0 3-1.343 3-3V16.2z" />
+              <path fill="#1e88e5" d="M3 16.2l3.614 1.71L13 23.7V40H6c-1.657 0-3-1.343-3-3V16.2z" />
+              <polygon fill="#e53935" points="35 11.2 24 19.45 13 11.2 12 17 13 23.7 24 31.95 35 23.7 36 17" />
+              <path fill="#c62828" d="M3 12.298V16.2l10 7.5V11.2L9.876 8.859C9.132 8.301 8.228 8 7.298 8C4.924 8 3 9.924 3 12.298z" />
+              <path fill="#fbc02d" d="M45 12.298V16.2l-10 7.5V11.2l3.124-2.341C38.868 8.301 39.772 8 40.702 8C43.076 8 45 9.924 45 12.298z" />
             </svg>
             <span>{{ lang.t('authChooseEmail') }}</span>
           </button>
 
           <button type="button" class="auth-method" (click)="chooseMethod('phone')">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <rect x="7" y="2.5" width="10" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6" />
-              <line x1="10.5" y1="18.5" x2="13.5" y2="18.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <svg class="auth-method__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+              <path fill="#29b6f6" d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4z" />
+              <path fill="#fff" d="M33.95 15l-3.746 19.126c-.282 1.44-1.152 1.792-2.336 1.115l-6.456-4.758-3.117 3.001c-.345.344-.633.632-1.297.632l.464-6.573 11.985-10.831c.521-.461-.113-.717-.808-.256l-14.815 9.328-6.38-1.994c-1.387-.435-1.412-1.387.29-2.054l24.968-9.628c1.154-.443 2.164.271 1.789 2.914z" />
             </svg>
             <span>{{ lang.t('authChoosePhone') }}</span>
           </button>

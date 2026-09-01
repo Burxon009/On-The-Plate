@@ -54,6 +54,12 @@ async function applyNameIfMissing(
   return updated.rows[0];
 }
 
+// Вход по email/телефону НИКОГДА не создаёт второй аккаунт, если пользователь
+// с таким логином уже есть — мы логиним его именно в существующий аккаунт.
+// Телефон здесь уже нормализован (normalizePhone) — в том же виде он лежит
+// в users.phone, поэтому поиск по равенству находит аккаунт, к которому
+// номер был привязан через профиль.
+
 async function findOrCreateUserByEmail(
   email: string,
   name: unknown

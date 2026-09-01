@@ -9,6 +9,8 @@ import {
   requestVerificationCode,
   verifyCode,
   isValidEmail,
+  isValidPhone,
+  normalizePhone,
   VerificationError,
 } from "./verificationService";
 import { logger } from "./logger";
@@ -324,8 +326,21 @@ router.patch("/me", authMiddleware, async (req: AuthRequest, res) => {
     if (phone !== undefined) {
       if (phone === null || phone === "") {
         values.push(null);
-      } else if (typeof phone === "string" && phone.trim().length <= 20) {
-        values.push(phone.trim());
+      } else if (isValidPhone(phone)) {
+        // Храним телефон строго в каноническом E.164 — в этом же виде
+        // приходит номер при входе по SMS, поэтому вход найдёт этот
+        // аккаунт, а не создаст новый.
+        const normalized = normalizePhone(phone);
+        const taken = await pool.query(
+          "SELECT 1 FROM users WHERE phone = $1 AND id <> $2",
+          [normalized, userId]
+        );
+        if (taken.rows.length > 0) {
+          return res
+            .status(400)
+            .json({ message: "Этот номер уже привязан к другому аккаунту" });
+        }
+        values.push(normalized);
       } else {
         return res.status(400).json({ message: "Некорректный телефон" });
       }
