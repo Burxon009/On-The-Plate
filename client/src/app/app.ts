@@ -228,7 +228,11 @@ export class App {
     try {
       await this.lockSvc.loadStatus();
     } catch {
-      // Не критично — при первом входе PIN всё равно попросим ниже.
+      // Замок недоступен (сеть / фича ещё не на бэке) — просто пускаем внутрь,
+      // не запирая пользователя на экране, который не сможет сохранить PIN.
+      this.lockSvc.markUnlocked();
+      this.unlockPhase.set('none');
+      return;
     }
     if (!this.lockSvc.pinSet()) {
       this.unlockPhase.set('setup-pin');
