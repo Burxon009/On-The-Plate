@@ -92,3 +92,15 @@ export async function rotateRefreshSession(
 export async function revokeRefreshSession(client: PoolClient, token: string): Promise<void> {
   await client.query("UPDATE refresh_sessions SET revoked_at = NOW() WHERE token_hash = $1 AND revoked_at IS NULL", [hashRefreshToken(token)]);
 }
+
+/**
+ * Отозвать ВСЕ активные сессии пользователя. Используется, когда нужно
+ * заставить человека пройти полный вход заново (например, после серии
+ * неверных PIN-кодов при быстрой разблокировке).
+ */
+export async function revokeAllSessionsForUser(client: PoolClient, userId: number): Promise<void> {
+  await client.query(
+    "UPDATE refresh_sessions SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+    [userId]
+  );
+}

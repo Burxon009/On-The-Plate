@@ -3,6 +3,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import userRoutes from "./userRoutes";
 import authRoutes from "./authRoutes";
+import lockRoutes from "./lockRoutes";
 import walletRoutes from "./walletRoutes";
 import storeRoutes from "./storeRoutes";
 import purchaseRoutes from "./purchaseRoutes";
@@ -82,6 +83,16 @@ app.use("/auth", rateLimit({
   limit: Number(process.env.AUTH_RATE_LIMIT ?? 10),
   standardHeaders: "draft-8",
   legacyHeaders: false,
+  // Этот лимитер — про попытки ВХОДА по коду (request-code / verify-code).
+  // Всё, что происходит при каждом открытии приложения — ротация сессии
+  // и быстрая разблокировка — под него не попадает (свои лимитеры есть
+  // в lockRoutes; у refresh — детект повторного использования токена).
+  skip: (req) =>
+    req.originalUrl.startsWith("/auth/pin/") ||
+    req.originalUrl.startsWith("/auth/webauthn/") ||
+    req.originalUrl.startsWith("/auth/lock/") ||
+    req.originalUrl === "/auth/refresh" ||
+    req.originalUrl === "/auth/logout",
   handler: (req, res) => {
     res.status(429).json({ message: "Слишком много попыток входа. Попробуйте через несколько минут." });
   },
@@ -110,6 +121,7 @@ app.get("/health/ready", async (_req, res) => {
 });
 
 app.use("/users", userRoutes);
+app.use("/auth", lockRoutes);
 app.use("/auth", authRoutes);
 app.use("/wallet", walletRoutes);
 app.use("/stores", storeRoutes);

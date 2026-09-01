@@ -222,6 +222,35 @@
   color: var(--success);
 }
 
+/* Быстрая разблокировка: строка «подпись + кнопка» */
+.ps-lock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ps-lock-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.ps-lock-state {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ps-lock-btn {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 0 16px;
+  height: 40px;
+}
+
 .ps-error {
   margin: 12px 0 0;
   font-size: 13px;

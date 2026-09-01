@@ -1,0 +1,17 @@
+:host {
+  display: contents;
+}
+
+.biometry-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-surface-border);
+  background: var(--accent-surface-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--accent-surface-text);
+}

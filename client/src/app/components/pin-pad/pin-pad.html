@@ -1,0 +1,30 @@
+<div class="pin-dots" [class.pin-dots--disabled]="disabled()">
+  @for (filled of dots(); track $index) {
+    <span class="pin-dot" [class.pin-dot--filled]="filled"></span>
+  }
+</div>
+
+<div class="pin-keys">
+  @for (key of keys; track $index) {
+    @if (key === '') {
+      <span class="pin-key pin-key--empty" aria-hidden="true"></span>
+    } @else if (key === 'del') {
+      <button
+        type="button"
+        class="pin-key pin-key--action"
+        [disabled]="disabled() || value().length === 0"
+        (click)="press('del')"
+        aria-label="Удалить"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+          <path d="M9 5h11v14H9l-6-7 6-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M13 9.5l4 5M17 9.5l-4 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+      </button>
+    } @else {
+      <button type="button" class="pin-key" [disabled]="disabled()" (click)="press(key)">
+        {{ key }}
+      </button>
+    }
+  }
+</div>

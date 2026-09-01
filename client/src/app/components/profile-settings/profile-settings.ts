@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../../api.config';
 import { AuthService, type User } from '../../services/auth.service';
 import { LanguageService } from '../../services/language.service';
+import { LockService } from '../../services/lock.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 const MAX_AVATAR_DIMENSION = 300;
 const AVATAR_JPEG_QUALITY = 0.7;
@@ -26,6 +28,7 @@ export class ProfileSettings implements OnInit {
   private readonly apiUrl = API_URL;
   readonly auth = inject(AuthService);
   readonly lang = inject(LanguageService);
+  readonly lock = inject(LockService);
 
   readonly name = signal('');
   readonly phone = signal('');
@@ -44,6 +47,20 @@ export class ProfileSettings implements OnInit {
   readonly emailMessage = signal('');
   readonly error = signal('');
 
+  // — быстрая разблокировка —
+  readonly biometrySupported = signal(false);
+  readonly biometryEnabled = this.lock.biometryEnabled;
+  readonly togglingBiometry = signal(false);
+  readonly biometryError = signal('');
+
+  readonly showPinForm = signal(false);
+  readonly pinCurrent = signal('');
+  readonly pinNew = signal('');
+  readonly pinRepeat = signal('');
+  readonly changingPin = signal(false);
+  readonly pinMessage = signal('');
+  readonly pinError = signal('');
+
   ngOnInit(): void {
     // В сигнале сессии обычно нет phone/avatar — тянем полный профиль.
     this.applyUser(this.auth.user());
@@ -51,6 +68,83 @@ export class ProfileSettings implements OnInit {
       next: (user) => this.applyUser(user),
       error: () => undefined,
     });
+
+    void this.lock.deviceSupportsBiometry().then((v) => this.biometrySupported.set(v));
+    void this.lock.loadStatus().catch(() => undefined);
+  }
+
+  togglePinForm(): void {
+    this.showPinForm.update((v) => !v);
+    this.pinCurrent.set('');
+    this.pinNew.set('');
+    this.pinRepeat.set('');
+    this.pinError.set('');
+    this.pinMessage.set('');
+  }
+
+  async submitPinChange(): Promise<void> {
+    if (this.changingPin()) return;
+
+    const current = this.pinCurrent().trim();
+    const next = this.pinNew().trim();
+    const repeat = this.pinRepeat().trim();
+
+    if (!/^\d{4}$/.test(current) || !/^\d{4}$/.test(next)) {
+      this.pinError.set(this.lang.t('pinSetupPrompt'));
+      return;
+    }
+    if (next !== repeat) {
+      this.pinError.set(this.lang.t('pinSetupMismatch'));
+      return;
+    }
+
+    this.changingPin.set(true);
+    this.pinError.set('');
+    this.pinMessage.set('');
+    try {
+      await this.lock.changePin(current, next);
+      this.pinMessage.set(this.lang.t('profilePinChanged'));
+      this.showPinForm.set(false);
+      this.pinCurrent.set('');
+      this.pinNew.set('');
+      this.pinRepeat.set('');
+    } catch (err) {
+      this.pinError.set(
+        err instanceof HttpErrorResponse && err.status === 400
+          ? err.error?.message || this.lang.t('profilePinWrong')
+          : this.lang.t('errorRequestFailed'),
+      );
+    } finally {
+      this.changingPin.set(false);
+    }
+  }
+
+  async enableBiometry(): Promise<void> {
+    if (this.togglingBiometry()) return;
+    this.togglingBiometry.set(true);
+    this.biometryError.set('');
+    try {
+      await this.lock.enableBiometry();
+    } catch (err) {
+      if (!isUserCancellation(err)) {
+        this.biometryError.set(this.lang.t('biometryFailed'));
+      }
+    } finally {
+      this.togglingBiometry.set(false);
+    }
+  }
+
+  async disableBiometry(): Promise<void> {
+    if (this.togglingBiometry()) return;
+    this.togglingBiometry.set(true);
+    this.biometryError.set('');
+    try {
+      await this.lock.disableBiometry();
+    } catch {
+      this.biometryError.set(this.lang.t('errorRequestFailed'));
+    } finally {
+      this.togglingBiometry.set(false);
+    }
   }
 
   private applyUser(user: User | null): void {
@@ -211,4 +305,11 @@ export class ProfileSettings implements OnInit {
         },
       });
   }
+}
+
+function isUserCancellation(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === 'NotAllowedError' || error.name === 'AbortError')
+  );
 }

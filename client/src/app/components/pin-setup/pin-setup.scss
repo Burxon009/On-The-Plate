@@ -1,0 +1,4 @@
+/* Каркас экрана — в глобальном styles.scss (.unlock-screen и т.д.). */
+:host {
+  display: contents;
+}

@@ -1,0 +1,28 @@
+<div class="unlock-screen">
+  <div class="unlock-inner">
+    <h1 class="unlock-title">{{ lang.t('pinSetupTitle') }}</h1>
+    <p class="unlock-prompt">
+      {{ phase() === 'repeat' ? lang.t('pinSetupRepeatPrompt') : lang.t('pinSetupPrompt') }}
+    </p>
+
+    <app-pin-pad
+      [value]="entry()"
+      (valueChange)="onEntryChange($event)"
+      [disabled]="saving()"
+      (completed)="onCompleted($event)"
+    />
+
+    @if (error()) {
+      <p class="unlock-error">{{ error() }}</p>
+    }
+
+    <button
+      type="button"
+      class="unlock-primary"
+      [disabled]="!ready() || saving()"
+      (click)="submit()"
+    >
+      {{ saving() ? lang.t('pinSaving') : lang.t('pinContinue') }}
+    </button>
+  </div>
+</div>

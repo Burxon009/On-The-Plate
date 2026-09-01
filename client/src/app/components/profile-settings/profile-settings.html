@@ -84,4 +84,68 @@
   @if (error()) {
     <p class="ps-error">{{ error() }}</p>
   }
+
+  <hr class="ps-divider" />
+
+  <!-- Быстрая разблокировка: PIN -->
+  <div class="ps-lock-row">
+    <span class="ps-lock-label">{{ lang.t('profilePinChange') }}</span>
+    <button class="ps-secondary ps-lock-btn" type="button" (click)="togglePinForm()">
+      {{ showPinForm() ? lang.t('profileClose') : lang.t('profilePinChange') }}
+    </button>
+  </div>
+
+  @if (showPinForm()) {
+    <label class="ps-field">
+      <span>{{ lang.t('profilePinCurrent') }}</span>
+      <input type="password" inputmode="numeric" maxlength="4" autocomplete="off"
+        [ngModel]="pinCurrent()" (ngModelChange)="pinCurrent.set($event)" />
+    </label>
+    <label class="ps-field">
+      <span>{{ lang.t('profilePinNew') }}</span>
+      <input type="password" inputmode="numeric" maxlength="4" autocomplete="off"
+        [ngModel]="pinNew()" (ngModelChange)="pinNew.set($event)" />
+    </label>
+    <label class="ps-field">
+      <span>{{ lang.t('profilePinRepeat') }}</span>
+      <input type="password" inputmode="numeric" maxlength="4" autocomplete="off"
+        [ngModel]="pinRepeat()" (ngModelChange)="pinRepeat.set($event)" />
+    </label>
+    <button class="ps-primary" type="button" [disabled]="changingPin()" (click)="submitPinChange()">
+      {{ changingPin() ? lang.t('profileSaving') : lang.t('profileSave') }}
+    </button>
+    @if (pinError()) {
+      <p class="ps-error">{{ pinError() }}</p>
+    }
+  }
+
+  @if (pinMessage()) {
+    <p class="ps-ok">{{ pinMessage() }}</p>
+  }
+
+  <!-- Быстрая разблокировка: биометрия (только если устройство поддерживает) -->
+  @if (biometrySupported()) {
+    <div class="ps-lock-row">
+      <span class="ps-lock-label">
+        {{ lang.t('profileBiometryLabel') }}
+        <small class="ps-lock-state">
+          {{ biometryEnabled() ? lang.t('profileBiometryOn') : lang.t('profileBiometryOff') }}
+        </small>
+      </span>
+      @if (biometryEnabled()) {
+        <button class="ps-secondary ps-lock-btn" type="button"
+          [disabled]="togglingBiometry()" (click)="disableBiometry()">
+          {{ lang.t('profileBiometryDisable') }}
+        </button>
+      } @else {
+        <button class="ps-secondary ps-lock-btn" type="button"
+          [disabled]="togglingBiometry()" (click)="enableBiometry()">
+          {{ togglingBiometry() ? lang.t('biometryEnabling') : lang.t('profileBiometryEnable') }}
+        </button>
+      }
+    </div>
+    @if (biometryError()) {
+      <p class="ps-error">{{ biometryError() }}</p>
+    }
+  }
 </section>

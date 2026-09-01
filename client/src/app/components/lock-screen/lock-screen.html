@@ -1,0 +1,29 @@
+<div class="unlock-screen">
+  <div class="unlock-inner">
+    <h1 class="unlock-title">{{ lang.t('lockTitle') }}</h1>
+
+    <app-pin-pad
+      [value]="entry()"
+      (valueChange)="entry.set($event)"
+      [disabled]="busy() || biometryRunning()"
+      (completed)="onPinCompleted($event)"
+    />
+
+    <p class="unlock-error">{{ error() }}</p>
+
+    @if (biometryEnabled()) {
+      <button
+        type="button"
+        class="unlock-primary"
+        [disabled]="busy() || biometryRunning()"
+        (click)="tryBiometry()"
+      >
+        {{ lang.t('lockUseBiometry') }}
+      </button>
+    }
+
+    <button type="button" class="unlock-ghost" (click)="forgot()">
+      {{ lang.t('lockForgot') }}
+    </button>
+  </div>
+</div>

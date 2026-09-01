@@ -134,6 +134,12 @@
 
   </main>
 </div>
+} @else if (unlockPhase() === 'lock') {
+  <app-lock-screen (unlocked)="onUnlocked()" (lockedOut)="onLockedOut()" />
+} @else if (unlockPhase() === 'setup-pin') {
+  <app-pin-setup (created)="onPinCreated()" />
+} @else if (unlockPhase() === 'setup-biometry') {
+  <app-biometry-setup (finished)="onBiometryFinished()" />
 } @else {
   <router-outlet></router-outlet>
 }

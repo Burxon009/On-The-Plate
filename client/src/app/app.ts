@@ -6,14 +6,29 @@ import { finalize, timeout } from 'rxjs';
 import { AuthService, type AuthIdentifier } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 import { LanguageService } from './services/language.service';
+import { LockService } from './services/lock.service';
 import type { TranslationKey } from './i18n/translations';
 import { ThemeToggle } from './components/theme-toggle/theme-toggle';
 import { LanguageSwitcher } from './components/language-switcher/language-switcher';
+import { PinSetup } from './components/pin-setup/pin-setup';
+import { BiometrySetup } from './components/biometry-setup/biometry-setup';
+import { LockScreen } from './components/lock-screen/lock-screen';
 
 type AuthMethod = 'choose' | 'email' | 'phone';
 
+/** Экран поверх дашборда после/во время входа: замок или первичная настройка. */
+type UnlockPhase = 'none' | 'setup-pin' | 'setup-biometry' | 'lock';
+
 @Component({
-  imports: [RouterOutlet, FormsModule, ThemeToggle, LanguageSwitcher],
+  imports: [
+    RouterOutlet,
+    FormsModule,
+    ThemeToggle,
+    LanguageSwitcher,
+    PinSetup,
+    BiometrySetup,
+    LockScreen,
+  ],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -50,6 +65,10 @@ export class App {
   readonly showGreeting = signal(false);
   readonly greetingName = signal('');
 
+  // Быстрая разблокировка (PIN / биометрия) поверх активной сессии.
+  private readonly lockSvc = inject(LockService);
+  readonly unlockPhase = signal<UnlockPhase>('none');
+
   /** Приветствие по времени суток, на выбранном языке. */
   greetingText(): string {
     const h = new Date().getHours();
@@ -67,9 +86,25 @@ export class App {
   ) {
     this.auth.restoreSession().pipe(timeout(8000)).subscribe({
       next: (restored) => {
-        if (restored) void this.router.navigate(['/dashboard']);
+        if (restored) void this.enterAfterRestore();
       },
     });
+  }
+
+  /**
+   * Приложение открыли заново, сессия ещё жива. Показываем экран замка
+   * (или, если PIN ещё не задан — обязательную установку PIN).
+   */
+  private async enterAfterRestore(): Promise<void> {
+    void this.router.navigate(['/dashboard']);
+    try {
+      await this.lockSvc.loadStatus();
+      this.unlockPhase.set(this.lockSvc.pinSet() ? 'lock' : 'setup-pin');
+    } catch {
+      // Статус не получить (нет сети) — не запираем наглухо, пускаем внутрь.
+      this.lockSvc.markUnlocked();
+      this.unlockPhase.set('none');
+    }
   }
 
   /** Выбрать способ входа (email или телефон). */
@@ -171,7 +206,12 @@ export class App {
         this.greetingName.set((session.user?.name ?? '').trim());
         this.showGreeting.set(true);
         void this.router.navigate(['/dashboard']);
-        setTimeout(() => this.showGreeting.set(false), 2500);
+        // Порядок после первого входа: приветствие (2.5 c) → установка PIN
+        // → предложение биометрии → дашборд.
+        setTimeout(() => {
+          this.showGreeting.set(false);
+          void this.afterFullLogin();
+        }, 2500);
       },
       error: (error) => {
         this.error.set(
@@ -181,6 +221,61 @@ export class App {
         );
       },
     });
+  }
+
+  /** После полного входа (email/SMS): решаем, нужна ли установка PIN. */
+  private async afterFullLogin(): Promise<void> {
+    try {
+      await this.lockSvc.loadStatus();
+    } catch {
+      // Не критично — при первом входе PIN всё равно попросим ниже.
+    }
+    if (!this.lockSvc.pinSet()) {
+      this.unlockPhase.set('setup-pin');
+    } else {
+      this.lockSvc.markUnlocked();
+      this.unlockPhase.set('none');
+    }
+  }
+
+  /** PIN установлен → сразу (тем же потоком) предлагаем биометрию, если есть. */
+  onPinCreated(): void {
+    void this.continueAfterPin();
+  }
+
+  private async continueAfterPin(): Promise<void> {
+    if (await this.lockSvc.deviceSupportsBiometry()) {
+      this.unlockPhase.set('setup-biometry');
+    } else {
+      this.finishUnlock(false);
+    }
+  }
+
+  /** Биометрия включена или пропущена — идём на дашборд. */
+  onBiometryFinished(): void {
+    this.finishUnlock(false);
+  }
+
+  /** Замок открыт (PIN или биометрия) — показываем приветствие, затем дашборд. */
+  onUnlocked(): void {
+    this.finishUnlock(true);
+  }
+
+  /** Лимит попыток PIN / «забыл PIN» — назад на полный вход. */
+  onLockedOut(): void {
+    this.unlockPhase.set('none');
+    this.lockSvc.lock();
+    this.auth.logout();
+  }
+
+  private finishUnlock(withGreeting: boolean): void {
+    this.lockSvc.markUnlocked();
+    this.unlockPhase.set('none');
+    if (withGreeting) {
+      this.greetingName.set((this.auth.user()?.name ?? '').trim());
+      this.showGreeting.set(true);
+      setTimeout(() => this.showGreeting.set(false), 2500);
+    }
   }
 
   /** Вернуться на экран ввода email/телефона, не перезагружая страницу. */
