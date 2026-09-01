@@ -59,12 +59,10 @@
 
 /* Шапка "липкая" — остаётся на месте при прокрутке. z-index 500: выше
    обычного прокручиваемого контента (auto/0), но ниже полноэкранных
-   оверлеев (QR 1000+, профиль 1100, история 1200, greeting/unlock 9000+) —
-   те всё равно должны перекрывать её целиком. Собственная выпадашка
-   гамбургер-меню (z-index 40/41) — потомок топбара, поэтому открывается
-   поверх него без конфликта: сравнение идёт для .topbar целиком.
-   Отрицательные горизонтальные margin + такой же padding — фон "съедает"
-   боковой отступ .loyalty-app, чтобы бар был во всю ширину колонки. */
+   оверлеев (QR 1000+, профиль 1100, история 1200, greeting/unlock 9000+).
+   Никакой "коробки": ни рамки, ни тени, ни стекла. Фон — ровно цвет
+   страницы (сплошной), только чтобы прокручиваемый контент не просвечивал
+   сквозь шапку; визуально она неотличима от фона. */
 .topbar {
   position: sticky;
   top: 0;
@@ -73,11 +71,8 @@
   justify-content: space-between;
   align-items: center;
   margin: 0 -20px 22px;
-  padding: 14px 20px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--glass-border);
+  padding: 12px 20px;
+  background: var(--bg-page);
 }
 
 .topbar-actions {
@@ -138,7 +133,7 @@ input {
   font-size: 15px;
   background: var(--bg-surface);
   color: var(--text-primary);
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.4s ease;
 }
 
 input:focus {
@@ -178,7 +173,7 @@ input:focus {
   color: var(--text-primary);
   font-size: 15px;
   font-family: inherit;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.4s ease;
 }
 
 .store-controls select:focus,
@@ -702,7 +697,7 @@ input:focus {
   outline: none;
   background: var(--bg-surface);
   color: var(--text-primary);
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.4s ease;
 }
 
 .review-form select:focus,

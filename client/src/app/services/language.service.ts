@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, effect, signal } from '@angular/core';
 import { LANGUAGES, translations, type Lang, type TranslationKey } from '../i18n/translations';
 
 const STORAGE_KEY = 'language-preference';
@@ -17,6 +17,14 @@ export class LanguageService {
 
   readonly available = LANGUAGES;
 
+  constructor() {
+    // Ставим <html data-lang="ru|uz|en"> сразу и при каждой смене языка —
+    // по образцу ThemeService с data-theme. Стили в styles.scss по этому
+    // атрибуту решают, где применять «литературный» шрифт (только ru).
+    this.applyLangAttr(this._lang());
+    effect(() => this.applyLangAttr(this._lang()));
+  }
+
   setLang(lang: Lang): void {
     if (!LANGUAGES.includes(lang)) return;
     this._lang.set(lang);
@@ -34,6 +42,12 @@ export class LanguageService {
   t(key: TranslationKey): string {
     const lang = this._lang();
     return translations[lang][key] ?? translations[DEFAULT_LANG][key] ?? key;
+  }
+
+  private applyLangAttr(lang: Lang): void {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-lang', lang);
+    }
   }
 
   private readStored(): Lang {

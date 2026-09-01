@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../../api.config';
 import { AuthService } from '../../services/auth.service';
 import { LanguageService } from '../../services/language.service';
+import { BackStackService } from '../../services/back-stack.service';
 import type { TranslationKey } from '../../i18n/translations';
 import { HamburgerMenu } from '../../components/hamburger-menu/hamburger-menu';
 import { ProfileSettings } from '../../components/profile-settings/profile-settings';
@@ -115,6 +116,7 @@ export class Dashboard implements OnInit, OnDestroy {
   showHistoryScreen = signal(false);
 
   readonly lang = inject(LanguageService);
+  readonly backStack = inject(BackStackService);
   loadingStores = signal(true);
   loadingStoreData = signal(false);
   joiningStore = signal(false);
@@ -168,6 +170,9 @@ export class Dashboard implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Кнопка «Назад» телефона закрывает оверлеи по одному, а не уводит
+    // из приложения. Дно — главный экран (дашборд).
+    this.backStack.init();
     this.loadStores();
     // Полный профиль (с phone/avatar) — для миниатюры в шапке.
     this.auth.loadCurrentUser().subscribe({ error: () => undefined });
@@ -261,6 +266,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   openQr(): void {
     this.showQr.set(true);
+    this.backStack.push('qr', () => this.showQr.set(false));
     this.qrError.set('');
     if (this.qrImageUrl() || this.loadingQr()) {
       return;
@@ -279,8 +285,9 @@ export class Dashboard implements OnInit, OnDestroy {
     });
   }
 
+  /** Закрытие QR — через back-стек, чтобы история осталась в синхроне. */
   closeQr(): void {
-    this.showQr.set(false);
+    this.backStack.back();
   }
 
   /** Код клиента для ручного ввода кассиром: 42 → "000042" (для текущего магазина). */
@@ -309,7 +316,14 @@ export class Dashboard implements OnInit, OnDestroy {
   openHistoryScreen(): void {
     if (this.selectedStore()) {
       this.showHistoryScreen.set(true);
+      this.backStack.push('history', () => this.showHistoryScreen.set(false));
     }
+  }
+
+  /** Открыть экран настроек профиля (из гамбургер-меню). */
+  openProfileScreen(): void {
+    this.showProfile.set(true);
+    this.backStack.push('profile', () => this.showProfile.set(false));
   }
 
   /** Локализованная подпись типа операции (для превью в карточке). */

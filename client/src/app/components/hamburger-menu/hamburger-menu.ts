@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { LanguageService } from '../../services/language.service';
+import { BackStackService } from '../../services/back-stack.service';
 import { ThemeToggle } from '../theme-toggle/theme-toggle';
 import { LanguageSwitcher } from '../language-switcher/language-switcher';
 
@@ -22,24 +23,35 @@ export class HamburgerMenu {
 
   readonly auth = inject(AuthService);
   readonly lang = inject(LanguageService);
+  private readonly backStack = inject(BackStackService);
 
   readonly open = signal(false);
 
   toggle(): void {
-    this.open.update((v) => !v);
+    if (this.open()) {
+      this.backStack.back();
+    } else {
+      this.open.set(true);
+      this.backStack.push('menu', () => this.open.set(false));
+    }
   }
 
+  /** Клик по фону / выбор пункта — закрываем через back-стек. */
   close(): void {
-    this.open.set(false);
+    this.backStack.back();
   }
 
   onProfile(): void {
-    this.close();
+    // Меню сменяется экраном профиля: снимаем слой меню без шага назад,
+    // дашборд сам откроет профиль отдельным слоем.
+    this.backStack.forget('menu');
+    this.open.set(false);
     this.openProfile.emit();
   }
 
   onLogout(): void {
-    this.close();
+    this.backStack.forget('menu');
+    this.open.set(false);
     this.auth.logout();
   }
 }

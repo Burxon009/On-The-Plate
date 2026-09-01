@@ -100,6 +100,15 @@
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* Тёмная тема: базовое rgba(255,255,255,0.08) слишком прозрачно/глянцево.
+   Делаем умеренно матовое стекло — тёмная полупрозрачная заливка (не
+   сплошная) + СИЛЬНЫЙ blur: именно размытие даёт ощущение матовости. */
+:host-context(:root[data-theme='dark']) .hm-panel {
+  background: rgba(20, 30, 25, 0.65);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+}
+
 .hm-panel.hm-leave {
   animation: hm-pop-out 0.16s ease forwards;
 }

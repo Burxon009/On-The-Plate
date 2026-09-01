@@ -63,11 +63,19 @@
   /* тень box-shadow */
   --shadow-color: rgba(20, 40, 28, 0.1);
 
-  /* типографика */
-  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;
+  /* типографика.
+     --font-heading по умолчанию — тот же чистый sans, что и в интерфейсе
+     (для UZ / EN). Характерный «литературный» Fraunces включается только
+     для русского — ниже, по :root[data-lang='ru']. */
+  --font-heading: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   color-scheme: light;
+}
+
+/* Русский — «литературный» serif в заголовках (логотип, секции, приветствие). */
+:root[data-lang='ru'] {
+  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;
 }
 
 :root[data-theme='dark'] {
@@ -135,6 +143,27 @@ body {
 :root[data-theme='dark'] body {
   background: radial-gradient(circle at 20% -10%, #234030 0%, #0f1f17 60%);
   background-attachment: fixed;
+}
+
+/* Плавное перетекание при смене темы для карточек/поверхностей на
+   var(--bg-surface). Перечислено глобально (styles.scss каскадит внутрь
+   компонентов) — где у элемента уже есть свой transition с background-color
+   (напр. .history-card, .menu-category-tab — 0.2s на hover), сработает он;
+   остальным даём переход здесь. Поля ввода добираются в своих scss. */
+.promotion-card,
+.review-form,
+.review-card,
+.reward-card,
+.menu-product-card,
+.message-card,
+.app-footer,
+.ps-panel,
+.th-header,
+.th-item,
+.track {
+  transition:
+    background-color 0.4s ease,
+    border-color 0.4s ease;
 }
 
 /* Заголовки — характерный serif, в духе логотипа «On the plate» */

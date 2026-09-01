@@ -13,7 +13,7 @@
       </div>
     </div>
     <div class="topbar-actions">
-      <app-hamburger-menu (openProfile)="showProfile.set(true)" />
+      <app-hamburger-menu (openProfile)="openProfileScreen()" />
     </div>
   </header>
 
@@ -419,13 +419,13 @@
 }
 
 @if (showProfile()) {
-  <app-profile-settings (closed)="showProfile.set(false)" animate.leave="ps-leave" />
+  <app-profile-settings (closed)="backStack.back()" animate.leave="ps-leave" />
 }
 
 @if (showHistoryScreen() && selectedStore(); as store) {
   <app-transaction-history
     [storeId]="store.id"
-    (closed)="showHistoryScreen.set(false)"
+    (closed)="backStack.back()"
     animate.leave="th-leave"
   />
 }
