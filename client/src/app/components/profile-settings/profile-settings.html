@@ -148,4 +148,10 @@
       <p class="ps-error">{{ biometryError() }}</p>
     }
   }
+
+  <!-- ВРЕМЕННО: диагностика проверки биометрии (для отладки iPhone/Safari).
+       Убрать после того, как разберёмся, почему пункт не появляется. -->
+  @if (lock.biometryDiag(); as diag) {
+    <pre class="ps-diag">{{ diag }}</pre>
+  }
 </section>

@@ -26,6 +26,13 @@ export class LockService {
   readonly pinSet = signal(false);
   readonly biometryEnabled = signal(false);
 
+  /**
+   * Диагностика проверки биометрии — временно показывается в настройках
+   * профиля, чтобы понять, почему на iPhone пункт «Face ID» не появляется
+   * (без Web Inspector: пользователь просто присылает скриншот).
+   */
+  readonly biometryDiag = signal('');
+
   private deviceBiometrySupported: boolean | null = null;
 
   markUnlocked(): void {
@@ -67,46 +74,62 @@ export class LockService {
   async deviceSupportsBiometry(): Promise<boolean> {
     if (this.deviceBiometrySupported !== null) return this.deviceBiometrySupported;
 
+    const win = typeof window !== 'undefined' ? window : undefined;
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '(no navigator)';
+    const secure = win?.isSecureContext ?? false;
+    // iOS: launched from home screen (PWA) — часть WebAuthn ведёт себя иначе
+    const standalone =
+      (navigator as { standalone?: boolean }).standalone === true ||
+      win?.matchMedia?.('(display-mode: standalone)').matches === true;
+    const inIframe = win ? win.self !== win.top : false;
+
+    const setDiag = (verdict: string, extra = '') => {
+      this.biometryDiag.set(
+        `биометрия: ${verdict}${extra ? ' — ' + extra : ''}\n` +
+          `PublicKeyCredential: ${typeof (win as { PublicKeyCredential?: unknown } | undefined)?.PublicKeyCredential}\n` +
+          `secureContext: ${secure} | standalone: ${standalone} | iframe: ${inIframe}\n` +
+          `UA: ${ua}`,
+      );
+    };
+
     const hasApi =
-      typeof window !== 'undefined' &&
-      typeof (window as { PublicKeyCredential?: unknown }).PublicKeyCredential === 'function';
+      typeof (win as { PublicKeyCredential?: unknown } | undefined)?.PublicKeyCredential ===
+      'function';
 
     if (!hasApi) {
       console.info('[biometry] WebAuthn недоступен: window.PublicKeyCredential не функция.', { ua });
+      setDiag('НЕТ', 'window.PublicKeyCredential отсутствует (частая причина — открыто из мессенджера / приватный режим)');
       this.deviceBiometrySupported = false;
       return false;
     }
 
-    const pkc = (window as unknown as {
+    const pkc = (win as unknown as {
       PublicKeyCredential: {
         isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean>;
       };
     }).PublicKeyCredential;
 
     if (typeof pkc.isUserVerifyingPlatformAuthenticatorAvailable !== 'function') {
-      console.warn(
-        '[biometry] PublicKeyCredential есть, но isUserVerifyingPlatformAuthenticatorAvailable нет — ' +
-          'отрицание не подтверждено, показываем пункт биометрии.',
-        { ua },
-      );
-      // не кэшируем — вдруг появится
+      console.warn('[biometry] isUserVerifyingPlatformAuthenticatorAvailable отсутствует.', { ua });
+      setDiag('ПОКАЗЫВАЕМ (проверить нельзя)', 'метода isUserVerifyingPlatformAuthenticatorAvailable нет');
       return true;
     }
 
     try {
       const available = await pkc.isUserVerifyingPlatformAuthenticatorAvailable();
       console.info('[biometry] isUserVerifyingPlatformAuthenticatorAvailable() =>', available, { ua });
+      setDiag(available ? 'ДА' : 'НЕТ', `isUVPAA() вернул ${available}`);
       this.deviceBiometrySupported = available;
       return available;
     } catch (err) {
       const e = err as { name?: string; message?: string };
-      console.error(
-        '[biometry] isUserVerifyingPlatformAuthenticatorAvailable() ВЫБРОСИЛ ошибку — ' +
-          'проверка не удалась (это НЕ значит, что биометрии нет). Показываем пункт.',
-        { name: e?.name, message: e?.message, error: err, ua },
-      );
-      // не кэшируем — перепроверим при следующем вызове
+      console.error('[biometry] isUserVerifyingPlatformAuthenticatorAvailable() выбросил ошибку.', {
+        name: e?.name,
+        message: e?.message,
+        error: err,
+        ua,
+      });
+      setDiag('ПОКАЗЫВАЕМ (проверить нельзя)', `isUVPAA() кинул ${e?.name ?? 'ошибку'}: ${e?.message ?? ''}`);
       return true;
     }
   }

@@ -277,6 +277,21 @@
   to { opacity: 0; }
 }
 
+/* ВРЕМЕННО: диагностика биометрии */
+.ps-diag {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ps-overlay,
   .ps-panel {
