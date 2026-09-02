@@ -35,6 +35,21 @@ export class LockService {
 
   private deviceBiometrySupported: boolean | null = null;
 
+  /**
+   * WebAuthn в принципе возможен в этом контексте (без вопроса «есть ли
+   * биометрия» — это отдельная асинхронная проверка isUVPAA). Используем
+   * как gate для ПОКАЗА пункта «Включить Face ID» в профиле: даже если
+   * isUVPAA() вернул false, пользователь может попробовать — iOS сам
+   * подскажет / включит iCloud Keychain, а реальную ошибку мы поймаем.
+   */
+  webAuthnPossible(): boolean {
+    if (typeof window === 'undefined') return false;
+    const hasApi =
+      typeof (window as { PublicKeyCredential?: unknown }).PublicKeyCredential === 'function';
+    const notIframe = window.self === window.top;
+    return hasApi && window.isSecureContext && notIframe;
+  }
+
   markUnlocked(): void {
     this.unlocked.set(true);
   }
@@ -118,7 +133,16 @@ export class LockService {
     try {
       const available = await pkc.isUserVerifyingPlatformAuthenticatorAvailable();
       console.info('[biometry] isUserVerifyingPlatformAuthenticatorAvailable() =>', available, { ua });
-      setDiag(available ? 'ДА' : 'НЕТ', `isUVPAA() вернул ${available}`);
+      setDiag(
+        available ? 'ДА' : 'НЕТ',
+        available
+          ? 'isUVPAA() вернул true'
+          : 'isUVPAA() вернул false. На реальном Safari это обычно значит: ' +
+              'выключены «Пароли» / iCloud Keychain (Настройки → Пароли → ' +
+              'Параметры автозаполнения), либо нет код-пароля устройства, либо ' +
+              'ограничение MDM. Кнопку «Включить» всё равно показываем — можно ' +
+              'попробовать, iOS подскажет.',
+      );
       this.deviceBiometrySupported = available;
       return available;
     } catch (err) {
@@ -168,6 +192,7 @@ export class LockService {
       );
       this.biometryEnabled.set(true);
       console.info('[biometry] регистрация прошла успешно');
+      this.biometryDiag.update((d) => d + '\n\n[Включить] УСПЕХ — биометрия подключена');
     } catch (err) {
       const e = err as { name?: string; message?: string };
       console.error('[biometry] enableBiometry() не удалось:', {
@@ -175,6 +200,11 @@ export class LockService {
         message: e?.message,
         error: err,
       });
+      this.biometryDiag.update(
+        (d) =>
+          d +
+          `\n\n[Включить] ОШИБКА: ${e?.name ?? '?'}: ${e?.message ?? String(err)}`,
+      );
       throw err;
     }
   }

@@ -69,7 +69,12 @@ export class ProfileSettings implements OnInit {
       error: () => undefined,
     });
 
-    void this.lock.deviceSupportsBiometry().then((v) => this.biometrySupported.set(v));
+    // Пункт «Face ID / отпечаток» показываем, если WebAuthn тут в принципе
+    // возможен (API есть, HTTPS, не iframe) — даже когда isUVPAA() вернул
+    // false: пользователь сможет попробовать, а точную причину покажет
+    // диагностический блок ниже (lock.biometryDiag).
+    this.biometrySupported.set(this.lock.webAuthnPossible());
+    void this.lock.deviceSupportsBiometry();
     void this.lock.loadStatus().catch(() => undefined);
   }
 
