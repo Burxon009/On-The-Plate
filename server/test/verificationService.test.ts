@@ -81,15 +81,28 @@ describe("requestVerificationCode", () => {
     expect(emailService.sendEmail).not.toHaveBeenCalled();
   });
 
-  it("падает с ошибкой про cooldown при повторном запросе раньше 60 сек", async () => {
+  it("первые 3 запроса подряд проходят без задержки (страховка от холодного старта)", async () => {
     await requestVerificationCode("user@example.com");
-    await expect(requestVerificationCode("user@example.com")).rejects.toThrow(
-      /Повторная отправка возможна через \d+ сек/
-    );
-    // Второе письмо не ушло, второй код не создан.
+    await requestVerificationCode("user@example.com");
+    await requestVerificationCode("user@example.com");
+
     const res = await pool.query("SELECT COUNT(*)::int AS c FROM verification_codes");
-    expect(res.rows[0].c).toBe(1);
-    expect(emailService.sendEmail).toHaveBeenCalledOnce();
+    expect(res.rows[0].c).toBe(3);
+    expect(emailService.sendEmail).toHaveBeenCalledTimes(3);
+  });
+
+  it("после 3 запросов включается cooldown 60 сек", async () => {
+    await requestVerificationCode("user@example.com");
+    await requestVerificationCode("user@example.com");
+    await requestVerificationCode("user@example.com");
+
+    await expect(requestVerificationCode("user@example.com")).rejects.toThrow(
+      /через \d+ сек/
+    );
+    // Четвёртый код не создан, четвёртое письмо не ушло.
+    const res = await pool.query("SELECT COUNT(*)::int AS c FROM verification_codes");
+    expect(res.rows[0].c).toBe(3);
+    expect(emailService.sendEmail).toHaveBeenCalledTimes(3);
   });
 });
 

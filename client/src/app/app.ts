@@ -84,7 +84,8 @@ export class App {
     private readonly auth: AuthService,
     private readonly router: Router,
   ) {
-    this.auth.restoreSession().pipe(timeout(8000)).subscribe({
+    // Render free-план засыпает — холодный старт бывает 30–45 сек.
+    this.auth.restoreSession().pipe(timeout(20000)).subscribe({
       next: (restored) => {
         if (restored) void this.enterAfterRestore();
       },
@@ -149,7 +150,7 @@ export class App {
     this.error.set('');
 
     this.auth.requestCode(identifier).pipe(
-      timeout(15000),
+      timeout(35000),
       finalize(() => {
         this.loading.set(false);
       }),
@@ -192,7 +193,7 @@ export class App {
     this.error.set('');
 
     this.auth.verifyCode(this.verificationId, this.code().trim(), this.name().trim()).pipe(
-      timeout(15000),
+      timeout(35000),
       finalize(() => {
         this.loading.set(false);
       }),

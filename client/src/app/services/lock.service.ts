@@ -26,13 +26,6 @@ export class LockService {
   readonly pinSet = signal(false);
   readonly biometryEnabled = signal(false);
 
-  /**
-   * Диагностика проверки биометрии — временно показывается в настройках
-   * профиля, чтобы понять, почему на iPhone пункт «Face ID» не появляется
-   * (без Web Inspector: пользователь просто присылает скриншот).
-   */
-  readonly biometryDiag = signal('');
-
   private deviceBiometrySupported: boolean | null = null;
 
   /**
@@ -69,92 +62,45 @@ export class LockService {
   }
 
   /**
-   * Поддерживает ли устройство биометрию (Face ID / отпечаток).
+   * Строго ли устройство подтверждает наличие биометрии (Face ID / отпечаток).
+   * Используется для ПРЕДЛОЖЕНИЯ биометрии при первом входе.
    *
-   * Порядок проверок важен (особенно для Safari/WebKit — историческая
-   * проблемная зона):
-   *   1. существует ли сам класс `PublicKeyCredential` (иначе вызов метода
-   *      на старых Safari падает с ошибкой, а не возвращает false);
+   * Порядок проверок важен для Safari/WebKit:
+   *   1. существует ли класс `PublicKeyCredential` (иначе вызов метода на
+   *      старых Safari падает с ошибкой, а не возвращает false);
    *   2. есть ли метод `isUserVerifyingPlatformAuthenticatorAvailable`;
-   *   3. сам вызов — в try/catch, потому что на части WebKit он РЕДЖЕКТИТСЯ,
-   *      а не резолвится в false (in-app браузеры Telegram/Instagram,
-   *      Private Browsing, Lockdown Mode и т.п.).
+   *   3. сам вызов — в try/catch (на части WebKit / in-app браузеров он
+   *      реджектится, а не резолвится в false).
    *
-   * Отличаем «API подтвердил, что биометрии НЕТ» (false, прячем пункт) от
-   * «проверить не удалось» (ошибка / метода нет — НЕ прячем, даём
-   * попробовать: реальная регистрация сама скажет, если не выйдет).
-   * Всё логируем в консоль — иначе на Safari пункт молча исчезает и
-   * причину не видно.
+   * Различаем «API сказал: биометрии нет» (false) и «проверить не удалось»
+   * (метода нет / ошибка → true, пусть реальная регистрация сама решит).
    */
   async deviceSupportsBiometry(): Promise<boolean> {
     if (this.deviceBiometrySupported !== null) return this.deviceBiometrySupported;
 
-    const win = typeof window !== 'undefined' ? window : undefined;
-    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '(no navigator)';
-    const secure = win?.isSecureContext ?? false;
-    // iOS: launched from home screen (PWA) — часть WebAuthn ведёт себя иначе
-    const standalone =
-      (navigator as { standalone?: boolean }).standalone === true ||
-      win?.matchMedia?.('(display-mode: standalone)').matches === true;
-    const inIframe = win ? win.self !== win.top : false;
+    const raw =
+      typeof window !== 'undefined'
+        ? (window as { PublicKeyCredential?: unknown }).PublicKeyCredential
+        : undefined;
 
-    const setDiag = (verdict: string, extra = '') => {
-      this.biometryDiag.set(
-        `биометрия: ${verdict}${extra ? ' — ' + extra : ''}\n` +
-          `PublicKeyCredential: ${typeof (win as { PublicKeyCredential?: unknown } | undefined)?.PublicKeyCredential}\n` +
-          `secureContext: ${secure} | standalone: ${standalone} | iframe: ${inIframe}\n` +
-          `UA: ${ua}`,
-      );
-    };
-
-    const hasApi =
-      typeof (win as { PublicKeyCredential?: unknown } | undefined)?.PublicKeyCredential ===
-      'function';
-
-    if (!hasApi) {
-      console.info('[biometry] WebAuthn недоступен: window.PublicKeyCredential не функция.', { ua });
-      setDiag('НЕТ', 'window.PublicKeyCredential отсутствует (частая причина — открыто из мессенджера / приватный режим)');
+    if (typeof raw !== 'function') {
       this.deviceBiometrySupported = false;
       return false;
     }
 
-    const pkc = (win as unknown as {
-      PublicKeyCredential: {
-        isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean>;
-      };
-    }).PublicKeyCredential;
-
+    const pkc = raw as unknown as {
+      isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean>;
+    };
     if (typeof pkc.isUserVerifyingPlatformAuthenticatorAvailable !== 'function') {
-      console.warn('[biometry] isUserVerifyingPlatformAuthenticatorAvailable отсутствует.', { ua });
-      setDiag('ПОКАЗЫВАЕМ (проверить нельзя)', 'метода isUserVerifyingPlatformAuthenticatorAvailable нет');
-      return true;
+      return true; // проверить нельзя — не запрещаем
     }
 
     try {
       const available = await pkc.isUserVerifyingPlatformAuthenticatorAvailable();
-      console.info('[biometry] isUserVerifyingPlatformAuthenticatorAvailable() =>', available, { ua });
-      setDiag(
-        available ? 'ДА' : 'НЕТ',
-        available
-          ? 'isUVPAA() вернул true'
-          : 'isUVPAA() вернул false. На реальном Safari это обычно значит: ' +
-              'выключены «Пароли» / iCloud Keychain (Настройки → Пароли → ' +
-              'Параметры автозаполнения), либо нет код-пароля устройства, либо ' +
-              'ограничение MDM. Кнопку «Включить» всё равно показываем — можно ' +
-              'попробовать, iOS подскажет.',
-      );
       this.deviceBiometrySupported = available;
       return available;
-    } catch (err) {
-      const e = err as { name?: string; message?: string };
-      console.error('[biometry] isUserVerifyingPlatformAuthenticatorAvailable() выбросил ошибку.', {
-        name: e?.name,
-        message: e?.message,
-        error: err,
-        ua,
-      });
-      setDiag('ПОКАЗЫВАЕМ (проверить нельзя)', `isUVPAA() кинул ${e?.name ?? 'ошибку'}: ${e?.message ?? ''}`);
-      return true;
+    } catch {
+      return true; // ошибка проверки ≠ подтверждённое отсутствие
     }
   }
 
@@ -191,8 +137,6 @@ export class LockService {
         this.http.post(`${this.api}/auth/webauthn/register-verify`, { response }),
       );
       this.biometryEnabled.set(true);
-      console.info('[biometry] регистрация прошла успешно');
-      this.biometryDiag.update((d) => d + '\n\n[Включить] УСПЕХ — биометрия подключена');
     } catch (err) {
       const e = err as { name?: string; message?: string };
       console.error('[biometry] enableBiometry() не удалось:', {
@@ -200,11 +144,6 @@ export class LockService {
         message: e?.message,
         error: err,
       });
-      this.biometryDiag.update(
-        (d) =>
-          d +
-          `\n\n[Включить] ОШИБКА: ${e?.name ?? '?'}: ${e?.message ?? String(err)}`,
-      );
       throw err;
     }
   }

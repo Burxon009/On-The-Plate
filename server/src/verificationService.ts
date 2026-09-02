@@ -9,6 +9,12 @@ import {
 
 const CODE_TTL_MINUTES = 5;
 const RESEND_COOLDOWN_SECONDS = 60;
+// Первые N запросов кода (за окно ниже) — без задержки: холодный старт
+// сервера (Render free) может «съесть» единственную попытку, клиент по
+// таймауту думает, что не отправилось, и жмёт ещё раз. После N-го — пауза
+// RESEND_COOLDOWN_SECONDS между запросами.
+const FREE_ATTEMPTS_BEFORE_COOLDOWN = 3;
+const ATTEMPT_WINDOW_MINUTES = 15;
 
 // Простая, но рабочая проверка формата email.
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,6 +64,36 @@ function generateCode(): string {
 
 export class VerificationError extends Error {}
 
+/**
+ * Политика повторной отправки кода: первые FREE_ATTEMPTS_BEFORE_COOLDOWN
+ * запросов за ATTEMPT_WINDOW_MINUTES — сразу, дальше — не чаще раза в
+ * RESEND_COOLDOWN_SECONDS. Бросает VerificationError, если нужно подождать.
+ */
+async function enforceResendPolicy(identifier: string): Promise<void> {
+  const recent = await pool.query(
+    `
+    SELECT created_at
+    FROM verification_codes
+    WHERE identifier = $1
+      AND created_at > NOW() - make_interval(mins => $2)
+    ORDER BY created_at DESC
+    `,
+    [identifier, ATTEMPT_WINDOW_MINUTES]
+  );
+
+  if (recent.rows.length < FREE_ATTEMPTS_BEFORE_COOLDOWN) return;
+
+  const lastCreatedAt = new Date(recent.rows[0].created_at);
+  const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
+
+  if (secondsSinceLast < RESEND_COOLDOWN_SECONDS) {
+    const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSinceLast);
+    throw new VerificationError(
+      `Слишком много запросов кода подряд. Следующий — через ${wait} сек.`
+    );
+  }
+}
+
 export async function cleanupVerificationCodes(): Promise<void> {
   await pool.query(`
     DELETE FROM verification_codes
@@ -80,28 +116,7 @@ export async function requestVerificationCode(email: string): Promise<void> {
 
   const identifier = normalizeEmail(email);
 
-  const recentResult = await pool.query(
-    `
-    SELECT created_at
-    FROM verification_codes
-    WHERE identifier = $1
-    ORDER BY created_at DESC
-    LIMIT 1
-    `,
-    [identifier]
-  );
-
-  if (recentResult.rows.length > 0) {
-    const lastCreatedAt = new Date(recentResult.rows[0].created_at);
-    const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
-
-    if (secondsSinceLast < RESEND_COOLDOWN_SECONDS) {
-      const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSinceLast);
-      throw new VerificationError(
-        `Повторная отправка возможна через ${wait} сек.`
-      );
-    }
-  }
+  await enforceResendPolicy(identifier);
 
   const code = generateCode();
   const codeHash = hashCode(identifier, code);
@@ -233,28 +248,7 @@ export async function requestPhoneVerificationCode(phone: string): Promise<void>
 
   const identifier = normalizePhone(phone);
 
-  const recentResult = await pool.query(
-    `
-    SELECT created_at
-    FROM verification_codes
-    WHERE identifier = $1
-    ORDER BY created_at DESC
-    LIMIT 1
-    `,
-    [identifier]
-  );
-
-  if (recentResult.rows.length > 0) {
-    const lastCreatedAt = new Date(recentResult.rows[0].created_at);
-    const secondsSinceLast = (Date.now() - lastCreatedAt.getTime()) / 1000;
-
-    if (secondsSinceLast < RESEND_COOLDOWN_SECONDS) {
-      const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - secondsSinceLast);
-      throw new VerificationError(
-        `Повторная отправка возможна через ${wait} сек.`
-      );
-    }
-  }
+  await enforceResendPolicy(identifier);
 
   let requestId: string;
   try {

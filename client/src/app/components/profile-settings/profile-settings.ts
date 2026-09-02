@@ -71,10 +71,9 @@ export class ProfileSettings implements OnInit {
 
     // Пункт «Face ID / отпечаток» показываем, если WebAuthn тут в принципе
     // возможен (API есть, HTTPS, не iframe) — даже когда isUVPAA() вернул
-    // false: пользователь сможет попробовать, а точную причину покажет
-    // диагностический блок ниже (lock.biometryDiag).
+    // false (напр. на Safari при выключенной связке ключей iCloud):
+    // пользователь сможет попробовать, а iOS сам подскажет / выдаст ошибку.
     this.biometrySupported.set(this.lock.webAuthnPossible());
-    void this.lock.deviceSupportsBiometry();
     void this.lock.loadStatus().catch(() => undefined);
   }
 
